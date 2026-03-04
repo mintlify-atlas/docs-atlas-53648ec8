@@ -1,0 +1,405 @@
+---
+title: Pathology service
+description: Manage medical pathologies and diagnoses in DoctorSoft+
+---
+
+The Pathology Service provides methods to manage the catalog of medical pathologies, including ICD-10 codes, specialty filtering, and active/inactive status management.
+
+## Methods
+
+### getAll
+
+Retrieve all pathologies in the system.
+
+```typescript
+patologies.getAll(): Promise<Pathology[]>
+```
+
+**Returns:**
+Array of all pathology records ordered by name.
+
+<ResponseField name="pathologies" type="array">
+  Each pathology includes:
+  
+  <ResponseField name="id" type="string">
+    Pathology UUID
+  </ResponseField>
+  
+  <ResponseField name="nombre" type="string">
+    Pathology name
+  </ResponseField>
+  
+  <ResponseField name="especialidad" type="string">
+    Medical specialty
+  </ResponseField>
+  
+  <ResponseField name="sexo" type="string | null">
+    Applicable gender (if gender-specific)
+  </ResponseField>
+  
+  <ResponseField name="activo" type="boolean">
+    Whether pathology is active
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string">
+    Creation timestamp
+  </ResponseField>
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const pathologies = await api.patologies.getAll();
+console.log(`Total pathologies: ${pathologies.length}`);
+```
+
+**Cache:**
+Results are cached for 30 minutes with key `'all'`.
+
+---
+
+### getAllActive
+
+Retrieve only active pathologies.
+
+```typescript
+patologies.getAllActive(): Promise<Pathology[]>
+```
+
+**Returns:**
+Array of active pathologies ordered by name.
+
+<ResponseField name="pathologies" type="array">
+  Includes: `id`, `nombre`, `especialidad`, `sexo`
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const activePathologies = await api.patologies.getAllActive();
+// Use for dropdowns and selection lists
+```
+
+**Filtering:**
+Automatically filters where `activo = true`.
+
+---
+
+### getById
+
+Retrieve a single pathology by ID.
+
+```typescript
+patologies.getById(id: string): Promise<Pathology | null>
+```
+
+<ParamField path="id" type="string" required>
+  The pathology's unique identifier (UUID)
+</ParamField>
+
+**Returns:**
+Complete pathology record including all fields.
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const pathology = await api.patologies.getById('abc-123-def');
+if (pathology) {
+  console.log(`Pathology: ${pathology.nombre}`);
+  console.log(`ICD-10: ${pathology.codcie10}`);
+  console.log(`Specialty: ${pathology.especialidad}`);
+}
+```
+
+**Cache:**
+Results are cached for 30 minutes with key `by_${id}`.
+
+---
+
+### search
+
+Search pathologies by name or specialty.
+
+```typescript
+patologies.search(searchTerm: string): Promise<Pathology[]>
+```
+
+<ParamField path="searchTerm" type="string" required>
+  Search term to match against name or specialty
+</ParamField>
+
+**Returns:**
+Up to 12 matching active pathologies ordered by name.
+
+<ResponseField name="results" type="array">
+  Each result includes: `id`, `nombre`, `codcie10`, `especialidad`, `sexo`
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Search by pathology name
+const diabetesResults = await api.patologies.search('diabetes');
+
+// Search by specialty
+const cardioResults = await api.patologies.search('cardiología');
+
+// Display results
+diabetesResults.forEach(p => {
+  console.log(`${p.nombre} (${p.codcie10})`);
+});
+```
+
+**Search behavior:**
+- Case-insensitive partial matching
+- Searches both `nombre` and `especialidad` fields
+- Returns only active pathologies (`activo = true`)
+- Limited to 12 results
+
+**Cache:**
+Results are cached for 30 minutes with key `search_${searchTerm}`.
+
+---
+
+### create
+
+Create a new pathology record.
+
+```typescript
+patologies.create(payload: PathologyPayload): Promise<Pathology>
+```
+
+<ParamField path="payload" type="object" required>
+  Pathology data
+  
+  <ParamField path="payload.nombre" type="string" required>
+    Pathology name
+  </ParamField>
+  
+  <ParamField path="payload.codcie10" type="string">
+    ICD-10 code
+  </ParamField>
+  
+  <ParamField path="payload.especialidad" type="string">
+    Medical specialty
+  </ParamField>
+  
+  <ParamField path="payload.sexo" type="string">
+    Applicable gender (if gender-specific)
+  </ParamField>
+  
+  <ParamField path="payload.activo" type="boolean" default={true}>
+    Whether pathology is active
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const newPathology = await api.patologies.create({
+  nombre: 'Diabetes Mellitus Tipo 2',
+  codcie10: 'E11',
+  especialidad: 'Endocrinología',
+  sexo: null, // Applies to all genders
+  activo: true
+});
+
+console.log(`Created pathology with ID: ${newPathology.id}`);
+```
+
+**Auto-populated fields:**
+- `idusuario` - Set from current session
+- `idbu` - Set from current business unit
+
+**Cache invalidation:**
+Clears all cache keys after creation.
+
+---
+
+### update
+
+Update an existing pathology record.
+
+```typescript
+patologies.update(
+  id: string,
+  payload: Partial<PathologyPayload>
+): Promise<Pathology>
+```
+
+<ParamField path="id" type="string" required>
+  The pathology's unique identifier (UUID)
+</ParamField>
+
+<ParamField path="payload" type="object" required>
+  Partial pathology data to update
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Update ICD-10 code
+await api.patologies.update('abc-123-def', {
+  codcie10: 'E11.9'
+});
+
+// Deactivate a pathology
+await api.patologies.update('abc-123-def', {
+  activo: false
+});
+
+// Update specialty
+await api.patologies.update('abc-123-def', {
+  especialidad: 'Medicina Interna'
+});
+```
+
+**Cache invalidation:**
+Clears all cache keys after update.
+
+---
+
+### delete
+
+Permanently delete a pathology record.
+
+```typescript
+patologies.delete(id: string): Promise<void>
+```
+
+<ParamField path="id" type="string" required>
+  The pathology's unique identifier (UUID)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+await api.patologies.delete('abc-123-def');
+console.log('Pathology deleted');
+```
+
+**Warning:**
+This is a hard delete operation. Consider using the `update` method to set `activo: false` instead for soft deletion.
+
+**Cache invalidation:**
+Clears all cache keys after deletion.
+
+---
+
+## Type definitions
+
+```typescript
+interface Pathology {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  nombre: string;
+  codcie10: string | null;
+  especialidad: string | null;
+  sexo: string | null;
+  activo: boolean;
+  idUsuario: string | null;
+  idbu: string | null;
+}
+
+interface PathologyPayload {
+  nombre: string;
+  codcie10?: string | null;
+  especialidad?: string | null;
+  sexo?: string | null;
+  activo?: boolean;
+}
+```
+
+## Common use cases
+
+### Autocomplete search
+
+```typescript
+import { api } from '../lib/api';
+import { useState, useEffect } from 'react';
+
+function PathologyAutocomplete({ value, onChange }) {
+  const [results, setResults] = useState([]);
+  const [search, setSearch] = useState('');
+  
+  useEffect(() => {
+    if (search.length > 2) {
+      api.patologies.search(search).then(setResults);
+    }
+  }, [search]);
+  
+  return (
+    <div>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search pathologies..."
+      />
+      <ul>
+        {results.map(p => (
+          <li key={p.id} onClick={() => onChange(p)}>
+            {p.nombre} ({p.codcie10})
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Filter by specialty
+
+```typescript
+import { api } from '../lib/api';
+
+const allActive = await api.patologies.getAllActive();
+
+// Filter by specialty
+const cardiology = allActive.filter(
+  p => p.especialidad === 'Cardiología'
+);
+
+console.log(`Cardiology pathologies: ${cardiology.length}`);
+```
+
+### Gender-specific pathologies
+
+```typescript
+import { api } from '../lib/api';
+
+const allActive = await api.patologies.getAllActive();
+
+// Get pathologies for female patients
+const femalePathologies = allActive.filter(
+  p => p.sexo === null || p.sexo === 'Femenino'
+);
+
+// Get pathologies for male patients
+const malePathologies = allActive.filter(
+  p => p.sexo === null || p.sexo === 'Masculino'
+);
+```
+
+## Source location
+
+`~/workspace/source/src/services/patologyService.ts`
+
+## Related services
+
+- [Patient service](/api/patient-service) - Link pathologies to patient records
+- [Appointment service](/api/appointment-service) - Reference pathologies in appointments

@@ -1,0 +1,534 @@
+---
+title: Security
+description: Row-level security policies, authentication mechanisms, and session management for DoctorSoft+
+---
+
+DoctorSoft+ implements comprehensive security measures including Row Level Security (RLS) policies, PKCE authentication flow, and robust session management to protect patient health data.
+
+## Authentication architecture
+
+The application uses Supabase Auth with enhanced security features.
+
+### PKCE flow
+
+DoctorSoft+ implements Proof Key for Code Exchange (PKCE) for secure authentication:
+
+```typescript
+// From: ~/workspace/source/src/supabase.ts:99-108
+auth: {
+  autoRefreshToken: true,
+  detectSessionInUrl: detectSessionInUrlFlag, // Disabled by default
+  storage: customStorage,
+  storageKey: 'supabase.auth.session',
+  persistSession: true,
+  flowType: 'pkce' // PKCE flow for enhanced security
+}
+```
+
+**Benefits of PKCE**:
+- Protects against authorization code interception
+- No client secret exposed in browser
+- Dynamic code verifier for each auth request
+- Recommended for all public clients
+
+### Session storage
+
+Sessions are stored in localStorage with SSR-safe fallbacks:
+
+```typescript
+// From: ~/workspace/source/src/supabase.ts:44-70
+const customStorage = {
+  getItem: (key: string) => {
+    try {
+      if (!isBrowser) return null;
+      return localStorage.getItem(key);
+    } catch (err) {
+      console.error('Error al acceder a localStorage:', err);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      if (!isBrowser) return;
+      localStorage.setItem(key, value);
+    } catch (err) {
+      console.error('Error al guardar en localStorage:', err);
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      if (!isBrowser) return;
+      localStorage.removeItem(key);
+    } catch (err) {
+      console.error('Error al eliminar de localStorage:', err);
+    }
+  }
+};
+```
+
+This implementation:
+- Gracefully handles SSR environments where localStorage is unavailable
+- Catches and logs storage quota errors
+- Prevents application crashes due to storage issues
+
+### Automatic token refresh
+
+Tokens are automatically refreshed before expiration:
+
+```typescript
+// From: ~/workspace/source/src/lib/supabaseUtils.ts:20-58
+const expiresAt = session.expires_at;
+if (expiresAt) {
+  const now = Math.floor(Date.now() / 1000);
+  const timeUntilExpiry = expiresAt - now;
+
+  // Refresh if token expires in less than 60 seconds
+  if (timeUntilExpiry < 60) {
+    const { data: refreshData, error: refreshError } = 
+      await supabase.auth.refreshSession();
+
+    if (refreshError) {
+      throw new Error(
+        'Tu sesión ha expirado. Por favor, recarga la página.'
+      );
+    }
+
+    return refreshData.session.user;
+  }
+}
+```
+
+**Token refresh behavior**:
+- Checks token expiration on every authenticated request
+- Refreshes proactively 60 seconds before expiration
+- Provides user-friendly error messages for expired sessions
+- Logs all refresh attempts for debugging
+
+### Request timeout
+
+All Supabase requests include a 15-second timeout:
+
+```typescript
+// From: ~/workspace/source/src/supabase.ts:16-41
+const fetchWithTimeout = (url: string, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  
+  return fetch(url, { ...options, signal: controller.signal })
+    .catch((error) => {
+      if (error.name === 'AbortError') {
+        throw new Error(
+          'Conexión a Supabase interrumpida por timeout (15s).'
+        );
+      }
+      throw error;
+    })
+    .finally(() => clearTimeout(timeoutId));
+};
+```
+
+This prevents:
+- Indefinite hangs on slow connections
+- UI freezing during network issues
+- Resource exhaustion from stalled requests
+
+## Row level security (RLS)
+
+Every table in DoctorSoft+ has RLS enabled to enforce data access controls at the database level.
+
+### Multi-tenant isolation
+
+All tables use business unit (idbu) filtering to isolate data:
+
+```sql
+-- Example from vital signs catalog
+-- From: 20251011221451_create_vital_signs_catalog_table.sql:90-101
+CREATE POLICY "Users can view vital signs from their BU"
+  ON "tcSignosVitales"
+  FOR SELECT
+  TO authenticated
+  USING (
+    idbu = (
+      SELECT idbu FROM "tcUsuarios" 
+      WHERE idusuario = auth.uid()
+    )
+  );
+```
+
+**How it works**:
+1. User authenticates with Supabase Auth
+2. `auth.uid()` returns the authenticated user's UUID
+3. Policy looks up the user's business unit from `tcUsuarios`
+4. Only rows matching that business unit are accessible
+
+<Note>
+  This architecture ensures complete data isolation between different medical practices using the same database.
+</Note>
+
+### Standard RLS pattern
+
+Most tables follow this RLS pattern:
+
+<CodeGroup>
+```sql SELECT (Read)
+CREATE POLICY "Users can view records from their BU"
+  ON "tableName"
+  FOR SELECT
+  TO authenticated
+  USING (
+    idbu = (SELECT idbu FROM "tcUsuarios" WHERE idusuario = auth.uid())
+  );
+```
+
+```sql INSERT (Create)
+CREATE POLICY "Users can insert records"
+  ON "tableName"
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    user_id = auth.uid() AND
+    idbu = (SELECT idbu FROM "tcUsuarios" WHERE idusuario = auth.uid())
+  );
+```
+
+```sql UPDATE (Modify)
+CREATE POLICY "Users can update their own records"
+  ON "tableName"
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+```
+
+```sql DELETE (Remove)
+CREATE POLICY "Users can soft delete their records"
+  ON "tableName"
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid() AND deleted_at IS NOT NULL);
+```
+</CodeGroup>
+
+### Avoiding policy recursion
+
+RLS policies that query the same table can cause infinite recursion. DoctorSoft+ uses security definer functions to avoid this:
+
+```sql
+-- From: 20251003185652_fix_get_user_idbu_simple_function.sql
+CREATE OR REPLACE FUNCTION get_user_idbu_simple()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT idbu FROM "tcUsuarios" 
+  WHERE idusuario = auth.uid() 
+  LIMIT 1;
+$$;
+
+-- Use in policies
+CREATE POLICY "Access records in same BU"
+  ON "someTable"
+  FOR SELECT
+  TO authenticated
+  USING (idbu = get_user_idbu_simple());
+```
+
+**Why this works**:
+- `SECURITY DEFINER` runs with elevated privileges, bypassing RLS
+- `STABLE` marks the function as cacheable within a transaction
+- Returns only the authenticated user's business unit
+- Prevents recursive policy evaluation
+
+### Catalog table policies
+
+Catalog tables (reference data) allow read-only access:
+
+```sql
+-- From: 20251002182941_create_appointment_statuses_table.sql:83-87
+CREATE POLICY "Authenticated users can read appointment statuses"
+  ON "tcCitasEstados"
+  FOR SELECT
+  TO authenticated
+  USING (true);
+```
+
+These tables:
+- Are read by all authenticated users
+- Have no INSERT/UPDATE/DELETE policies for regular users
+- Can only be modified via migrations
+- Include: `tcCitasEstados`, `tcSignosVitales` (catalog), `tcCodigosPostales`
+
+### Patient data policies
+
+Patient tables have the strictest policies:
+
+```sql
+-- From: 20250517220216_steep_sun.sql:24-35
+CREATE POLICY "Access patients in same business unit"
+  ON "tcPacientes"
+  FOR ALL
+  TO authenticated
+  USING (
+    idbu = (
+      SELECT idbu FROM "tcUsuarios" 
+      WHERE idusuario = auth.uid()
+    ) AND
+    deleted_at IS NULL  -- Exclude soft-deleted records
+  );
+```
+
+**Additional protections**:
+- Soft deletion instead of hard deletion (`deleted_at` column)
+- User ID tracking for audit trails (`user_id` column)
+- Business unit isolation (`idbu` column)
+- Automatic timestamp updates (`updated_at` triggers)
+
+### Activity tracking policies
+
+Activity logs are immutable after creation:
+
+```sql
+-- From: 20251003181437_create_activity_tracking_table_v2.sql
+CREATE POLICY "Usuarios ven actividades de su BU"
+  ON "tcActividadReciente"
+  FOR SELECT
+  TO authenticated
+  USING (idbu = get_user_idbu_simple());
+
+CREATE POLICY "Usuarios autenticados insertan actividades"
+  ON "tcActividadReciente"
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (id_usuario = auth.uid());
+
+CREATE POLICY "Actividades son inmutables"
+  ON "tcActividadReciente"
+  FOR UPDATE
+  TO authenticated
+  USING (false);  -- No updates allowed
+
+CREATE POLICY "Solo admins eliminan actividades"
+  ON "tcActividadReciente"
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM "tcUsuarios" 
+      WHERE idusuario = auth.uid() 
+      AND rol = 'admin'
+    )
+  );
+```
+
+This ensures:
+- Complete audit trail of all user actions
+- Activity records cannot be modified after creation
+- Only administrators can delete activity logs
+- Each activity is tied to a specific user and business unit
+
+## Storage security
+
+Supabase Storage policies control access to uploaded files.
+
+### Storage RLS policies
+
+```sql
+-- Allow authenticated users to upload files
+CREATE POLICY "Authenticated users can upload files"
+  ON storage.objects 
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = '00000000-default-bucket' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Allow users to read files from their business unit
+CREATE POLICY "Users can read files from their BU"
+  ON storage.objects 
+  FOR SELECT
+  TO authenticated
+  USING (
+    bucket_id = '00000000-default-bucket' AND
+    (storage.foldername(name))[1] IN (
+      SELECT idbu::text FROM "tcUsuarios" 
+      WHERE idusuario = auth.uid()
+    )
+  );
+
+-- Allow users to delete their own files
+CREATE POLICY "Users can delete their own files"
+  ON storage.objects 
+  FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = '00000000-default-bucket' AND
+    owner = auth.uid()
+  );
+```
+
+### File organization
+
+Organize files by business unit and patient:
+
+```
+00000000-default-bucket/
+├── {business-unit-id}/
+│   ├── patients/
+│   │   ├── {patient-id}/
+│   │   │   ├── documents/
+│   │   │   ├── images/
+│   │   │   └── reports/
+```
+
+This structure:
+- Isolates files by business unit
+- Organizes patient files hierarchically
+- Simplifies RLS policy enforcement
+- Enables easy file management
+
+## Security best practices
+
+### Environment variables
+
+<Warning>
+  Never commit credentials to version control. Always use environment variables.
+</Warning>
+
+**Required environment variables**:
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Public anonymous key (safe for client-side)
+
+**Never use**:
+- `SUPABASE_SERVICE_ROLE_KEY` in client-side code
+- Database passwords in environment variables
+- Hardcoded API keys in source code
+
+### Client-side security
+
+```typescript
+// ✅ Good: Use the anon key
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
+);
+
+// ❌ Bad: Never use service role key in browser
+const supabase = createClient(
+  url,
+  process.env.SUPABASE_SERVICE_ROLE_KEY  // DANGEROUS!
+);
+```
+
+The anon key is safe because:
+- All access is controlled by RLS policies
+- Cannot bypass RLS restrictions
+- Rate-limited by Supabase
+- Can be rotated if compromised
+
+### Session validation
+
+Always validate sessions before sensitive operations:
+
+```typescript
+import { requireSession } from './supabaseUtils';
+
+async function updatePatientData(patientId: string, data: any) {
+  // Validate session first
+  const user = await requireSession();
+  
+  // Proceed with operation
+  const { error } = await supabase
+    .from('tcPacientes')
+    .update(data)
+    .eq('id', patientId);
+    
+  if (error) throw error;
+}
+```
+
+See `~/workspace/source/src/lib/supabaseUtils.ts:4-62` for the complete session validation implementation.
+
+### Error handling
+
+Never expose internal errors to users:
+
+```typescript
+try {
+  await supabase.from('tcPacientes').insert(data);
+} catch (error) {
+  // ❌ Bad: Exposes internal details
+  throw error;
+  
+  // ✅ Good: User-friendly message
+  throw new Error('No se pudo guardar el paciente. Intente nuevamente.');
+  
+  // ✅ Better: Log details, show friendly message
+  console.error('Patient insert error:', error);
+  throw new Error('No se pudo guardar el paciente. Intente nuevamente.');
+}
+```
+
+### Rate limiting
+
+Supabase automatically rate-limits requests. For additional protection:
+
+```typescript
+// Configure in Supabase client
+const client = createClient(url, key, {
+  global: {
+    headers: {
+      'x-application-name': 'doctorsoft/1.0.0'
+    }
+  },
+  realtime: {
+    params: { 
+      eventsPerSecond: 2  // Limit realtime events
+    }
+  }
+});
+```
+
+## Compliance considerations
+
+### HIPAA compliance
+
+For HIPAA compliance when handling patient health information:
+
+1. **Enable Supabase HIPAA features** (Enterprise plan required)
+2. **Use encrypted storage** for sensitive files
+3. **Enable audit logging** via activity tracking
+4. **Implement session timeout** (default: 1 hour)
+5. **Use HTTPS only** for all connections
+6. **Regular access reviews** using activity logs
+
+### Data retention
+
+Configure automatic data cleanup:
+
+```sql
+-- Delete activity logs older than 90 days
+CREATE OR REPLACE FUNCTION cleanup_old_activity_logs()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM "tcActividadReciente" 
+  WHERE created_at < NOW() - INTERVAL '90 days';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+Schedule this function to run periodically based on your data retention policy.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Supabase setup" icon="database" href="/deployment/supabase-setup">
+    Configure your Supabase project
+  </Card>
+  <Card title="Database migrations" icon="code" href="/deployment/database-migrations">
+    Apply and manage schema changes
+  </Card>
+</CardGroup>

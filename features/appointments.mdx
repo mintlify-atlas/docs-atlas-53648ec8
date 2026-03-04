@@ -1,0 +1,289 @@
+---
+title: Appointments
+description: Schedule, manage, and track patient appointments with flexible status workflows
+---
+
+The appointments module provides comprehensive tools for scheduling patient visits, managing appointment statuses, and tracking appointment history. It supports multiple consultation rooms, flexible time slots, and a sophisticated status workflow system.
+
+## Overview
+
+The appointment management system includes:
+
+<CardGroup cols={2}>
+  <Card title="Appointment scheduling" icon="calendar-plus">
+    Book appointments with date/time selection and availability checking
+  </Card>
+  <Card title="Status management" icon="arrows-turn-right">
+    Track appointments through configurable status workflows
+  </Card>
+  <Card title="Multi-room support" icon="hospital">
+    Manage appointments across multiple consultation rooms (consultorios)
+  </Card>
+  <Card title="History tracking" icon="clock-rotate-left">
+    View complete history of status changes and rescheduling
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Appointment list view
+
+The main appointments view displays:
+
+- **Statistics cards**: Total appointments, today's appointments, pending, and confirmed counts
+- **Date range filter**: View appointments for today, this week, this month, or last month
+- **Search functionality**: Filter by patient name or appointment reason
+- **Expandable rows**: Click to view appointment history timeline
+- **Action menu**: Quick access to view details, edit, reschedule, change status, and more
+
+### Appointment details
+
+Each appointment includes:
+
+- Date and time
+- Patient information (name, demographics)
+- Appointment type (primera, seguimiento, urgencia, control, revision)
+- Duration in minutes
+- Consultation room (consultorio)
+- Reason/motivo
+- Current status with color-coded badges
+- Additional notes
+- Urgency flag
+
+### Status workflow
+
+Appointments follow a controlled status workflow:
+
+**Initial statuses** (when creating appointments):
+- Programada (Scheduled)
+- Urgencia (Urgent)
+
+**Transition statuses**:
+- Confirmada (Confirmed)
+- En Consulta (In consultation)
+- Completada (Completed)
+- Cancelada (Cancelled)
+- No se presentó (No-show)
+- Cerrada (Closed)
+
+**Terminal statuses** (no further changes allowed):
+- No se presentó
+- Canceladas
+- Cerrada
+
+<Note>
+  The status workflow is enforced by the system. You can only transition to allowed statuses from the current state. Terminal statuses cannot be changed once set.
+</Note>
+
+### Appointment history
+
+Every status change and modification is tracked in the appointment history:
+
+- Timestamp of change
+- User who made the change
+- Previous and new status
+- Previous and new date/time (if rescheduled)
+- Optional notes
+
+## How to use
+
+### Creating a new appointment
+
+<Steps>
+  <Step title="Select a patient">
+    First, navigate to "Pacientes" and select the patient for whom you want to schedule an appointment. You must have an active patient selected.
+  </Step>
+  
+  <Step title="Open appointment form">
+    Navigate to "Citas" or "Calendario" and click "Nueva Cita" or the "+" button
+  </Step>
+  
+  <Step title="Select date">
+    Choose the appointment date from the date picker. You can navigate forward/backward by weeks, up to 60 days in advance.
+  </Step>
+  
+  <Step title="Choose time slot">
+    Select an available time slot from the grid. Time slots run from 8:00 AM to 11:00 PM in 30-minute intervals. Occupied slots are shown as unavailable.
+  </Step>
+  
+  <Step title="Enter appointment details">
+    - Verify the patient name
+    - Enter the reason for the visit (required)
+    - Select the initial status (Programada or Urgencia)
+    - Add any additional notes (optional)
+  </Step>
+  
+  <Step title="Save the appointment">
+    Click "Guardar" to create the appointment. The system will validate that the time slot is available.
+  </Step>
+</Steps>
+
+<Tip>
+  The appointment form shows occupied time slots in gray. If you try to book an occupied slot, the system will prevent the double-booking.
+</Tip>
+
+### Viewing appointments
+
+<Steps>
+  <Step title="Access appointments view">
+    Navigate to "Gestión de Citas" from the main menu
+  </Step>
+  
+  <Step title="Apply filters">
+    - Use the date range selector (Hoy, Esta Semana, Este Mes, Mes Anterior)
+    - Use the search bar to filter by patient name or reason
+  </Step>
+  
+  <Step title="View appointment details">
+    Click on any row to expand and see the appointment history timeline
+  </Step>
+  
+  <Step title="Use action menu">
+    Click the three-dot menu on each row to:
+    - View details (read-only)
+    - Edit appointment
+    - Reschedule
+    - Change status
+    - View history
+    - Print
+  </Step>
+</Steps>
+
+### Changing appointment status
+
+<Steps>
+  <Step title="Open action menu">
+    In the appointments list, click the action menu (•••) for the appointment
+  </Step>
+  
+  <Step title="Select 'Cambiar Estado'">
+    Choose "Cambiar Estado" from the menu. The system will show only allowed status transitions.
+  </Step>
+  
+  <Step title="Choose new status">
+    Select the desired status from the available options
+  </Step>
+  
+  <Step title="Confirm change">
+    Review the status change confirmation modal showing:
+    - Current status
+    - New status
+    - Warning if the new status is terminal (cannot be reversed)
+  </Step>
+  
+  <Step title="Save change">
+    Click "Confirmar" to apply the status change. The change is recorded in the appointment history.
+  </Step>
+</Steps>
+
+<Note>
+  Once an appointment reaches a terminal status (No se presentó, Cancelada, Cerrada), the status cannot be changed again. Choose carefully!
+</Note>
+
+### Editing an appointment
+
+<Steps>
+  <Step title="Locate the appointment">
+    Find the appointment in the list view using search or date filters
+  </Step>
+  
+  <Step title="Click edit">
+    Use the action menu and select "Editar" or click the edit icon
+  </Step>
+  
+  <Step title="Modify details">
+    Update the date, time, reason, or notes as needed. The patient cannot be changed.
+  </Step>
+  
+  <Step title="Save changes">
+    Click "Actualizar". The system records the changes in the appointment history.
+  </Step>
+</Steps>
+
+### Viewing appointment history
+
+<Steps>
+  <Step title="Expand appointment row">
+    In the appointments list, click the chevron icon to expand the appointment row
+  </Step>
+  
+  <Step title="Review timeline">
+    The history timeline shows:
+    - All status changes
+    - Rescheduling events
+    - User who made each change
+    - Timestamp of each change
+    - Any notes associated with changes
+  </Step>
+</Steps>
+
+## Appointment types
+
+DoctorSoft+ supports different consultation types, each with a color-coded badge:
+
+<AccordionGroup>
+  <Accordion title="Primera (First visit)" icon="circle" iconType="solid" color="#8B5CF6">
+    Initial consultation for a new condition or patient. Shown with a purple badge.
+  </Accordion>
+  
+  <Accordion title="Seguimiento (Follow-up)" icon="circle" iconType="solid" color="#3B82F6">
+    Follow-up visit for ongoing treatment. Shown with a blue badge.
+  </Accordion>
+  
+  <Accordion title="Urgencia (Urgent)" icon="circle" iconType="solid" color="#EF4444">
+    Urgent care appointment requiring immediate attention. Shown with a red badge.
+  </Accordion>
+  
+  <Accordion title="Control (Check-up)" icon="circle" iconType="solid" color="#10B981">
+    Routine control or check-up visit. Shown with a green badge.
+  </Accordion>
+  
+  <Accordion title="Revisión (Review)" icon="circle" iconType="solid" color="#F59E0B">
+    Review of test results or treatment plan. Shown with an amber badge.
+  </Accordion>
+</AccordionGroup>
+
+## Consultation rooms
+
+Appointments can be assigned to different consultation rooms (consultorios):
+
+- Consultorio 1
+- Consultorio 2
+- Consultorio 3
+
+This allows practices with multiple examination rooms to manage appointments by location and avoid conflicts.
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Confirm appointments the day before">
+    Use the "Esta Semana" or "Hoy" filter to review upcoming appointments and confirm them with patients. Change status to "Confirmada" when patients confirm.
+  </Accordion>
+  
+  <Accordion title="Update status promptly">
+    Change appointment status to "En Consulta" when the patient arrives, and "Completada" when the visit is finished. This keeps the schedule accurate.
+  </Accordion>
+  
+  <Accordion title="Use the urgency flag">
+    Mark urgent appointments with the urgente flag so they stand out in the schedule.
+  </Accordion>
+  
+  <Accordion title="Add meaningful notes">
+    Use the notes field to record important information about the appointment, such as "Patient requested morning slot" or "Follow-up on lab results".
+  </Accordion>
+  
+  <Accordion title="Check appointment history before calling patients">
+    Before calling a patient about their appointment, expand the row to see the history. This helps you understand if they've rescheduled multiple times or had previous no-shows.
+  </Accordion>
+</AccordionGroup>
+
+## Integration with calendar
+
+Appointments created in the appointments module automatically appear in the Calendar view, where you can:
+
+- View appointments in month or week view
+- Drag and drop to reschedule (in supported views)
+- See visual availability across time slots
+- Create new appointments by clicking on time slots
+
+See the [Calendar](/features/calendar) documentation for more details.

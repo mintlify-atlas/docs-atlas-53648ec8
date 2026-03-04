@@ -1,0 +1,332 @@
+---
+title: Non-pathological history
+description: Capture lifestyle habits, social environment, and non-medical factors affecting health
+---
+
+The **Non-Pathological History** (Antecedentes No Patológicos) module documents lifestyle factors, social determinants, and environmental conditions that influence patient health. This comprehensive form covers habits, living conditions, socioeconomic factors, and preventive health measures.
+
+## Overview
+
+The non-pathological history is organized into three main tabs:
+
+1. **Habits** (Hábitos) - Lifestyle and substance use
+2. **Environment** (Entorno) - Housing and socioeconomic factors
+3. **History** (Historial) - Immunizations, allergies, and travel
+
+<Note>
+This information provides essential context for understanding health risks and developing appropriate treatment plans.
+</Note>
+
+## Tab 1: Habits and lifestyle
+
+### Substance consumption
+
+Document the patient's use of various substances:
+
+#### Alcohol
+Select frequency:
+- **Nunca** (Never)
+- **Ocasional** (Occasional)
+- **Moderado** (Moderate)
+- **Frecuente** (Frequent)
+- **Ex-consumidor** (Former consumer)
+
+#### Tobacco
+Choose current status:
+- **Nunca** (Never)
+- **Ex-fumador** (Former smoker)
+- **Ocasional** (Occasional)
+- **Diario** (Daily)
+
+**Cantidad/día** field: Specify daily consumption (e.g., "5 cigarrillos")
+
+#### Caffeine
+Daily intake:
+- **Ninguna** (None)
+- **1-2 tazas** (1-2 cups)
+- **3-4 tazas** (3-4 cups)
+- **5+ tazas** (5+ cups)
+
+#### Illicit drugs
+Toggle switch (Yes/No) to indicate use of illicit substances.
+
+### Physical activity
+
+Select exercise frequency:
+- **Sedentario** (Sedentary)
+- **Ligero** (Light - 1-2/week)
+- **Moderado** (Moderate - 3-4/week)
+- **Intenso** (Intense - 5+/week)
+
+### Diet type
+
+Multiple selection checkboxes:
+- Omnívora
+- Vegetariana
+- Vegana
+- Sin gluten (Gluten-free)
+- Keto
+- Otra (Other)
+
+<Info>
+Patients can have multiple diet types selected (e.g., vegetarian + gluten-free).
+</Info>
+
+### Sleep patterns
+
+**Hours of sleep** (Horas de sueño):
+- Menos de 5 (&lt;5)
+- 5-6 horas
+- 7-8 horas
+- 9+ horas
+
+**Sleep quality** (Calidad del sueño):
+- Buena (Good)
+- Regular (Fair)
+- Mala (Poor)
+
+## Tab 2: Social environment
+
+### Housing information
+
+#### Type of dwelling
+- Casa (House)
+- Apartamento (Apartment)
+- Condominio (Condominium)
+- Otro (Other)
+
+#### Number of occupants
+- 1 persona (1 person)
+- 2-3 personas
+- 4-5 personas
+- 6+ personas
+
+#### Pets
+Multiple selection:
+- Perro (Dog)
+- Gato (Cat)
+- Ave (Bird)
+- Ninguna (None)
+
+### Socioeconomic information
+
+#### Education level
+- Primaria (Primary school)
+- Secundaria (Secondary school)
+- Preparatoria (High school)
+- Universidad (University)
+- Posgrado (Postgraduate)
+
+#### Current occupation
+Free-text field for job title or employment status.
+
+#### Income level
+- Bajo (Low)
+- Medio-bajo (Lower-middle)
+- Medio (Middle)
+- Medio-alto (Upper-middle)
+- Alto (High)
+
+<Warning>
+Handle socioeconomic information sensitively and ensure patient privacy when documenting these details.
+</Warning>
+
+## Tab 3: Additional history
+
+### Immunizations up to date
+
+Checkbox selection of common vaccines:
+- COVID-19
+- Influenza
+- Hepatitis B
+- Tétanos (Tetanus)
+- Sarampión (Measles)
+- Varicela (Chickenpox)
+- HPV
+- Neumococo (Pneumococcal)
+
+### Environmental allergies
+
+Select applicable allergies:
+- Polen (Pollen)
+- Ácaros (Dust mites)
+- Polvo (Dust)
+- Pelo animal (Animal hair)
+- Moho (Mold)
+- Látex (Latex)
+- Ninguna (None)
+- Otras (Others)
+
+### Recent travel
+
+**Toggle switch**: Indicates whether the patient has traveled recently to endemic zones in the last 12 months.
+
+If **Yes**, the **Travel details** field appears:
+- Describe destinations
+- Include dates
+- Note any relevant health risks from travel regions
+
+### Additional notes
+
+Free-text area for any other relevant non-pathological information not covered by the structured fields.
+
+## Summary display
+
+The bottom of the form shows a real-time summary with colored badges:
+
+**Substance use**:
+- Alcohol status (primary color)
+- Tobacco status (primary color)
+- Drugs indicated (red badge)
+
+**Lifestyle**:
+- Diet types (primary color)
+- Housing type (primary color)
+
+**Preventive health**:
+- Number of vaccines up to date (green badge)
+
+<Info>
+The summary updates instantly as you fill out the form, providing a quick overview of key information.
+</Info>
+
+## Nested form structure
+
+The form uses nested objects for data organization:
+
+```javascript
+{
+  habitos_estilo_vida: {
+    alcohol: string,
+    tabaco: string,
+    tabaco_cantidad: string,
+    drogas_ilicitas: boolean,
+    cafeina: string,
+    dieta: string[],
+    actividad_fisica: string,
+    horas_sueno: string,
+    calidad_sueno: string,
+  },
+  entorno_social: {
+    tipo_vivienda: string,
+    numero_ocupantes: string,
+    mascotas: string[],
+    nivel_educativo: string,
+    ocupacion_actual: string,
+    nivel_ingresos: string,
+  },
+  historial_adicional: {
+    inmunizaciones: string[],
+    alergias_ambientales: string[],
+    viajes_recientes: boolean,
+    detalles_viajes: string,
+  },
+  notas_generales: string,
+}
+```
+
+## Custom Switch component
+
+The form includes a custom toggle switch for boolean fields (drugs, travel):
+- **Green** when active (checked)
+- **Gray** when inactive (unchecked)
+- Displays "Sí" or "No" label
+- Keyboard accessible
+- Disabled state supported
+
+## Saving and updating
+
+Click **Guardar** (Save) to:
+- Create a new record (if none exists for the patient)
+- Update existing record (if already present)
+
+The system automatically determines whether to create or update based on `patient_id`.
+
+## Print report
+
+Click **"Imprimir Informe"** to generate a formatted report including:
+- All habit and lifestyle information
+- Social environment details
+- Immunization and allergy status
+- Travel history
+- General notes
+
+## Clinical significance
+
+### Lifestyle factors and health
+
+Non-pathological history reveals:
+- **Risk factors**: Smoking, alcohol, sedentary lifestyle
+- **Protective factors**: Exercise, healthy diet, adequate sleep
+- **Social determinants**: Housing, income, education affecting health
+- **Preventive status**: Immunization coverage, health screening
+
+### Using the information
+
+<Steps>
+  <Step title="Risk assessment">
+    Identify modifiable risk factors (smoking, diet, exercise).
+  </Step>
+  
+  <Step title="Prevention planning">
+    Recommend immunizations, lifestyle changes, and screenings.
+  </Step>
+  
+  <Step title="Treatment adaptation">
+    Consider socioeconomic factors when prescribing treatments.
+  </Step>
+  
+  <Step title="Health education">
+    Provide targeted education based on current habits and knowledge gaps.
+  </Step>
+</Steps>
+
+## Best practices
+
+### Data collection tips
+
+- **Create rapport**: Explain why you're asking about sensitive topics
+- **Non-judgmental approach**: Use neutral language about substance use
+- **Verify immunizations**: Ask for vaccination card when possible
+- **Update regularly**: Habits and circumstances change over time
+
+### Counseling opportunities
+
+<Accordion title="Smoking cessation">
+  When tobacco use is documented:
+  - Offer cessation resources
+  - Discuss health benefits of quitting
+  - Provide support options (medications, counseling)
+</Accordion>
+
+<Accordion title="Nutrition guidance">
+  Based on diet type and habits:
+  - Assess nutritional adequacy
+  - Recommend dietary improvements
+  - Refer to nutritionist if needed
+</Accordion>
+
+<Accordion title="Exercise promotion">
+  For sedentary patients:
+  - Encourage gradual activity increase
+  - Provide safe exercise recommendations
+  - Address barriers to physical activity
+</Accordion>
+
+## Source code reference
+
+Implemented in:
+- `/workspace/source/src/pages/AntecedentesNoPatologicos.tsx` (1036 lines)
+- Uses React Hook Form with Zod validation schemas
+- Nested schema structure for organized data
+- Custom Switch component for boolean toggles
+
+Key validation schemas:
+- `habitosEstiloVidaSchema` - Lifestyle habits
+- `entornoSocialSchema` - Social environment
+- `historialAdicionalSchema` - Additional history
+
+API endpoints:
+- `api.antecedentesNoPatologicos.getByPatientId()`
+- `api.antecedentesNoPatologicos.create()`
+- `api.antecedentesNoPatologicos.update()`

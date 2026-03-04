@@ -1,0 +1,315 @@
+---
+title: Heredo-familial history
+description: Track hereditary health conditions across family members with drag-and-drop pathology assignment
+---
+
+The **Heredo-Familial History** (Antecedentes Heredo-Familiares) module provides an innovative drag-and-drop interface for documenting the health status and conditions of the patient's family members. This visual approach makes it easy to identify hereditary patterns and genetic risk factors.
+
+## Overview
+
+This module allows you to:
+- Document vital status and age of family members
+- Assign pathologies from the catalog using drag-and-drop
+- Add custom pathologies not in the catalog
+- Track hereditary disease patterns
+- Generate family health reports
+
+<Note>
+The system includes built-in validation to prevent assigning sex-specific conditions to incompatible family members (e.g., prostate cancer to female relatives).
+</Note>
+
+## Family member structure
+
+The form includes seven predefined family member categories:
+
+| Family Member | Spanish Name | Lineage Color |
+|---------------|--------------|---------------|
+| Mother | Madre | Maternal (pink) |
+| Maternal Grandmother | Abuela (Materna) | Maternal (pink) |
+| Maternal Grandfather | Abuelo (Materno) | Maternal (pink) |
+| Father | Padre | Paternal (blue) |
+| Paternal Grandmother | Abuela (Paterna) | Paternal (blue) |
+| Paternal Grandfather | Abuelo (Paterno) | Paternal (blue) |
+| Siblings | Hermanos | Neutral (orange) |
+
+<Info>
+Visual color coding helps quickly identify maternal vs. paternal lineage when reviewing family history.
+</Info>
+
+## Drag-and-drop interface
+
+### Pathologies available section
+
+At the top of the form, all active pathologies from your catalog are displayed as draggable tags. Each pathology shows:
+- **Grip icon** (⋮⋮) indicating it can be dragged
+- **Pathology name**
+- **Count badge** showing total available pathologies
+- **Settings icon** linking to the pathology catalog
+
+### Assigning pathologies
+
+<Steps>
+  <Step title="Select a pathology">
+    Click and hold on a pathology tag in the "Patologías Disponibles" section.
+  </Step>
+  
+  <Step title="Drag to family member">
+    Drag the pathology over the desired family member's row. The row will highlight with a blue background.
+  </Step>
+  
+  <Step title="Drop to assign">
+    Release the mouse to drop the pathology. It appears in the family member's pathology column.
+  </Step>
+  
+  <Step title="Remove if needed">
+    Click the **×** button on the assigned pathology tag to remove it.
+  </Step>
+</Steps>
+
+### Sex-based validation
+
+The system automatically validates pathology assignments:
+
+**Female family members** (Madre, Abuela Materna, Abuela Paterna):
+- Cannot receive male-specific pathologies
+- Error message: "La patología '[name]' es específica de sexo Masculino y no puede ser asignada a [member]."
+
+**Male family members** (Padre, Abuelo Materno, Abuelo Paterno):
+- Cannot receive female-specific pathologies
+- Error message: "La patología '[name]' es específica de sexo Femenino y no puede ser asignada a [member]."
+
+**Siblings** (Hermanos):
+- Can receive any pathology since the group can be mixed gender
+
+<Warning>
+Validation errors appear as yellow warning banners and automatically disappear after 2 seconds.
+</Warning>
+
+## Family member fields
+
+For each family member, you can document:
+
+### Vital status (Estado Vital)
+
+Dropdown options:
+- **Vivo/Viva** (Alive)
+- **Fallecido/Fallecida** (Deceased)
+- **Desconocido** (Unknown)
+
+The options automatically adjust based on grammatical gender (Vivo for male, Viva for female).
+
+### Age (Edad)
+
+Numeric field for:
+- Current age (if alive)
+- Age at death (if deceased)
+
+### Pathologies (Patologías)
+
+A drag-and-drop zone that:
+- Shows placeholder text: "Arrastre patologías aquí"
+- Highlights blue when dragging over: "Suelte aquí la patología"
+- Displays assigned pathologies as removable tags
+- Prevents duplicate pathology assignments
+
+### Observations (Observaciones)
+
+Free-text area for:
+- Additional context about conditions
+- Family member's medical history notes
+- Age at diagnosis
+- Disease progression details
+
+## Pathology catalog integration
+
+The module uses React Query for efficient data loading:
+
+```typescript
+const { data: activePatologiesData, isLoading, error } = useQuery<AppPatology[]>({
+  queryKey: ['activePatologies'],
+  queryFn: () => api.patologies.getAllActive(),
+  staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
+});
+```
+
+### Managing the catalog
+
+Click the **Settings icon** (⚙️) next to "Patologías Disponibles" to:
+- Navigate to Settings → Pathology Catalog
+- Add new pathologies with sex classification
+- Activate/deactivate pathologies
+- Edit existing entries
+
+<Info>
+Changes to the pathology catalog are immediately reflected in the family history interface.
+</Info>
+
+## Drag-and-drop implementation
+
+The module uses **@dnd-kit** library for smooth drag-and-drop:
+
+### Mouse and touch support
+- **MouseSensor**: Requires 8px movement before drag starts (prevents accidental drags)
+- **TouchSensor**: 200ms delay with 5px tolerance (optimized for mobile)
+
+### Visual feedback
+- **DragOverlay**: Shows semi-transparent pathology tag while dragging
+- **Drop zone highlight**: Blue background with ring border
+- **Cursor changes**: From grab (⊕) to grabbing (⊙) during drag
+
+## Data structure
+
+Each family member record contains:
+
+```typescript
+{
+  id: string,                    // Database ID (if saved)
+  miembro_fam_key: string,       // Family member identifier
+  estado_vital: string,          // Vital status
+  edad: number,                  // Age
+  patologias: [                  // Array of conditions
+    {
+      nPatologia: string         // Pathology name
+    }
+  ],
+  observaciones: string          // Notes
+}
+```
+
+## Saving the family history
+
+Click **Guardar** (Save) to:
+- Save all family member data in one operation
+- Create or update records for each family member
+- Only save members with relevant data (vital status or pathologies)
+
+<Steps>
+  <Step title="Review all entries">
+    Check that vital status, ages, pathologies, and observations are complete.
+  </Step>
+  
+  <Step title="Click Guardar">
+    The save button is located in the top-right header.
+  </Step>
+  
+  <Step title="Verify success">
+    The form remains open with saved data. No success message is shown, but the save operation completes.
+  </Step>
+</Steps>
+
+## Generate report
+
+Click **"Ver Informe"** (View Report) to open a modal with:
+- Complete family health history
+- Organized by family member
+- Pathologies listed for each relative
+- Print-friendly format
+- Patient identification header
+
+## Instructions panel
+
+The form includes a helpful instructions section:
+
+1. Arrastre desde "Patologías Disponibles" al familiar correspondiente
+2. Al soltarlas, se asignarán automáticamente
+3. Complete estado vital, edad y observaciones de cada familiar
+4. Presione "Guardar" para confirmar cambios
+
+## Identifying hereditary patterns
+
+### Common hereditary conditions
+
+Look for patterns across generations:
+
+**Cancer syndromes:**
+- Breast cancer in multiple female relatives (BRCA genes)
+- Colon cancer in multiple generations (Lynch syndrome)
+- Multiple cancer types in family (Li-Fraumeni)
+
+**Cardiovascular disease:**
+- Early heart attacks (&lt;55 men, &lt;65 women)
+- Familial hypercholesterolemia
+- Hypertension across generations
+
+**Metabolic disorders:**
+- Diabetes Type 2 in multiple relatives
+- Thyroid disease patterns
+- Obesity across family
+
+**Mental health:**
+- Depression, anxiety, bipolar disorder
+- Alzheimer's and dementia
+- Schizophrenia
+
+<Accordion title="Red flags for genetic counseling">
+  Consider genetic counseling referral when:
+  - Multiple first-degree relatives with same cancer
+  - Cancer at unusually young age (&lt;50)
+  - Same person with multiple primary cancers
+  - Bilateral cancer (e.g., both breasts)
+  - Rare cancers (e.g., male breast cancer)
+  - Pattern suggesting autosomal dominant inheritance
+</Accordion>
+
+## Clinical workflow
+
+### During patient interview
+
+1. **Start with first-degree relatives**: Parents, siblings
+2. **Ask about vital status**: Confirm if alive or deceased
+3. **Document ages**: Current age or age at death
+4. **Inquire about diagnoses**: Known health conditions
+5. **Note age at diagnosis**: Important for risk assessment
+6. **Move to second-degree**: Grandparents
+7. **Ask about patterns**: Multiple relatives with same condition
+
+### Risk assessment
+
+Use family history to:
+- Identify high-risk patients for screening
+- Recommend preventive measures
+- Consider genetic testing when appropriate
+- Adjust screening schedules (earlier/more frequent)
+- Provide patient education about risks
+
+## Best practices
+
+### Effective data collection
+
+- **Use pedigree symbols**: Consider drawing a traditional pedigree alongside digital entry
+- **Verify information**: Ask patient to confirm with relatives when uncertain
+- **Update regularly**: Family history changes as relatives age or develop conditions
+- **Document unknowns**: Record when patient doesn't know family history
+
+### Genetic counseling indicators
+
+<Warning>
+Refer to genetic counseling when hereditary patterns suggest inherited syndromes, especially for cancer and cardiovascular disease.
+</Warning>
+
+## Source code reference
+
+Implemented in:
+- `/workspace/source/src/pages/HeredoFamHistory.tsx` (930 lines)
+- Uses @dnd-kit/core for drag-and-drop functionality
+- React Hook Form with Zod validation
+- React Query for pathology catalog loading
+
+Key components:
+- **DraggablePathologyTag**: Individual pathology with drag handle
+- **DroppableFamilyRow**: Family member row accepting drops
+- **DragOverlay**: Visual feedback during drag
+
+API endpoints:
+- `api.heredoFamilialHistory.getAllByPatientId()`
+- `api.heredoFamilialHistory.createOrUpdate()`
+- `api.patologies.getAllActive()`
+
+Fixed family members defined in:
+```typescript
+export const FIXED_FAMILY_MEMBERS = [
+  { key: 'Madre', label: 'Madre' },
+  { key: 'Abuela (Materna)', label: 'Abuela Materna' },
+  // ... 7 total members
+];
+```

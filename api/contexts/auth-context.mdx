@@ -1,0 +1,244 @@
+---
+title: AuthContext
+description: Manage user authentication state, session handling, and user data throughout the application
+---
+
+The `AuthContext` provides authentication state management using Supabase Auth. It handles user sessions, automatic token refresh, and extended user information from the database.
+
+## Provider
+
+### AuthProvider
+
+Wraps your application to provide authentication state to all child components.
+
+<ParamField path="children" type="React.ReactNode" required>
+  The components that will have access to authentication context
+</ParamField>
+
+```tsx App.tsx
+import { AuthProvider } from './contexts/AuthContext';
+
+function App() {
+  return (
+    <AuthProvider>
+      <YourApp />
+    </AuthProvider>
+  );
+}
+```
+
+## Hook
+
+### useAuth()
+
+Access authentication state and methods from any component within the `AuthProvider`.
+
+```tsx Dashboard.tsx
+import { useAuth } from './contexts/AuthContext';
+
+export function Dashboard() {
+  const { user, loading, signOut } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {user?.nombre}</h1>
+      <p>Role: {user?.userRole}</p>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+## Context values
+
+<ResponseField name="user" type="UserWithAttributes | null">
+  The currently authenticated user with extended attributes from the database.
+  
+  <Expandable title="UserWithAttributes properties">
+    <ResponseField name="id" type="string">
+      Unique user identifier from Supabase Auth
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      User's email address
+    </ResponseField>
+    <ResponseField name="userRole" type="string">
+      User's role: `'Administrador'`, `'Medico'`, or `'Recepcionista'`
+    </ResponseField>
+    <ResponseField name="idbu" type="string">
+      Business unit identifier
+    </ResponseField>
+    <ResponseField name="nombre" type="string">
+      User's full name
+    </ResponseField>
+    <ResponseField name="estado" type="string">
+      User's status: `'Activo'` or `'Inactivo'`
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  `true` during initial session load or sign-in. Does not block UI during token refresh.
+</ResponseField>
+
+<ResponseField name="error" type="AuthError | null">
+  Authentication error if one occurred during sign-in or session management
+</ResponseField>
+
+<ResponseField name="signOut" type="() => Promise<{ error: AuthError | null }>">
+  Signs out the current user and clears the session
+</ResponseField>
+
+<ResponseField name="clearError" type="() => void">
+  Clears the current error state
+</ResponseField>
+
+## TypeScript types
+
+### AuthContextType
+
+```tsx
+interface AuthContextType {
+  user: UserWithAttributes | null;
+  loading: boolean;
+  signOut: () => Promise<{ error: AuthError | null }>;
+  error: AuthError | null;
+  clearError: () => void;
+}
+```
+
+### UserWithAttributes
+
+```tsx
+type UserWithAttributes = Omit<User, 'deleted_at'> & {
+  userRole?: string | null;
+  idbu?: string | null;
+  nombre?: string | null;
+  estado?: string | null;
+  deleted_at?: string | null;
+};
+```
+
+## Usage examples
+
+### Checking user role
+
+```tsx ProtectedRoute.tsx
+import { useAuth } from './contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
+
+export function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user || user.userRole !== 'Administrador') {
+    return <Navigate to="/" />;
+  }
+
+  return <>{children}</>;
+}
+```
+
+### Handling sign out
+
+```tsx Header.tsx
+import { useAuth } from './contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export function Header() {
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      console.error('Sign out error:', error);
+    } else {
+      navigate('/login');
+    }
+  };
+
+  return (
+    <header>
+      <span>{user?.nombre}</span>
+      <button onClick={handleSignOut}>Sign Out</button>
+    </header>
+  );
+}
+```
+
+### Conditional rendering based on auth state
+
+```tsx Prescriptions.tsx
+import { useAuth } from './contexts/AuthContext';
+
+export function Prescriptions() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading prescriptions...</div>;
+  }
+
+  if (!user) {
+    return <div>Please sign in to view prescriptions</div>;
+  }
+
+  return (
+    <div>
+      <h1>Prescriptions for {user.nombre}</h1>
+      {/* Prescription list */}
+    </div>
+  );
+}
+```
+
+## Implementation details
+
+### Session management
+
+- The context automatically loads the user session on mount
+- Token refresh happens automatically in the background without blocking the UI
+- Extended user info (role, name, business unit) is fetched from `tcUsuarios` table
+- User info is cached to prevent redundant database queries
+
+### Loading states
+
+- `loading` is `true` during:
+  - Initial session load (`INITIAL_SESSION`)
+  - User sign-in (`SIGNED_IN`)
+  - User sign-out (`SIGNED_OUT`)
+- `loading` remains `false` during token refresh to avoid UI flicker
+
+### Error handling
+
+```tsx LoginForm.tsx
+import { useAuth } from './contexts/AuthContext';
+import { useEffect } from 'react';
+
+export function LoginForm() {
+  const { error, clearError } = useAuth();
+
+  useEffect(() => {
+    // Clear error when component unmounts
+    return () => clearError();
+  }, [clearError]);
+
+  if (error) {
+    return <div className="error">{error.message}</div>;
+  }
+
+  return <form>{/* Login form */}</form>;
+}
+```
+
+## Related hooks
+
+For convenience, you can also import `useAuth` from the hooks directory:
+
+```tsx
+import { useAuth } from '../hooks/useAuth';
+// This re-exports the same hook from AuthContext
+```

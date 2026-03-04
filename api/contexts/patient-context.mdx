@@ -1,0 +1,368 @@
+---
+title: PatientContext
+description: Track and manage the currently selected patient across the application
+---
+
+The `SelectedPatientContext` maintains the state of the currently selected patient, allowing different parts of the application to access and update the selected patient seamlessly.
+
+## Provider
+
+### SelectedPatientProvider
+
+Wraps your application to provide patient selection state to all child components.
+
+<ParamField path="children" type="React.ReactNode" required>
+  The components that will have access to patient context
+</ParamField>
+
+```tsx App.tsx
+import { SelectedPatientProvider } from './contexts/SelectedPatientContext';
+
+function App() {
+  return (
+    <SelectedPatientProvider>
+      <YourApp />
+    </SelectedPatientProvider>
+  );
+}
+```
+
+## Hook
+
+### useSelectedPatient()
+
+Access the selected patient state and setter from any component within the `SelectedPatientProvider`.
+
+```tsx PatientProfile.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+
+export function PatientProfile() {
+  const { selectedPatient, setSelectedPatient } = useSelectedPatient();
+
+  if (!selectedPatient) {
+    return <div>No patient selected</div>;
+  }
+
+  return (
+    <div>
+      <h1>{selectedPatient.nombres} {selectedPatient.apellidos}</h1>
+      <p>Email: {selectedPatient.email}</p>
+      <button onClick={() => setSelectedPatient(null)}>
+        Clear Selection
+      </button>
+    </div>
+  );
+}
+```
+
+## Context values
+
+<ResponseField name="selectedPatient" type="Patient | null">
+  The currently selected patient object from the `tcPacientes` table, or `null` if no patient is selected.
+  
+  <Expandable title="Patient properties">
+    <ResponseField name="id" type="string">
+      Unique patient identifier
+    </ResponseField>
+    <ResponseField name="nombres" type="string">
+      Patient's first name(s)
+    </ResponseField>
+    <ResponseField name="apellidos" type="string">
+      Patient's last name(s)
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      Patient's email address
+    </ResponseField>
+    <ResponseField name="telefono" type="string | null">
+      Patient's phone number
+    </ResponseField>
+    <ResponseField name="fechanacimiento" type="string">
+      Patient's date of birth (ISO format)
+    </ResponseField>
+    <ResponseField name="sexo" type="string">
+      Patient's sex
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Record creation timestamp
+    </ResponseField>
+    <ResponseField name="updated_at" type="string">
+      Last update timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="setSelectedPatient" type="(patient: Patient | null) => void">
+  Updates the currently selected patient. Pass `null` to clear the selection.
+</ResponseField>
+
+## TypeScript types
+
+### SelectedPatientContextType
+
+```tsx
+interface SelectedPatientContextType {
+  selectedPatient: Patient | null;
+  setSelectedPatient: (patient: Patient | null) => void;
+}
+```
+
+### Patient
+
+```tsx
+type Patient = Database['public']['Tables']['tcPacientes']['Row'];
+
+// Expanded:
+interface Patient {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  email: string;
+  telefono: string | null;
+  fechanacimiento: string;
+  sexo: string;
+  created_at: string;
+  updated_at: string;
+  // ... additional fields from tcPacientes table
+}
+```
+
+## Usage examples
+
+### Patient list with selection
+
+```tsx PatientList.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+import { useState, useEffect } from 'react';
+import { api } from './lib/api';
+
+export function PatientList() {
+  const { selectedPatient, setSelectedPatient } = useSelectedPatient();
+  const [patients, setPatients] = useState([]);
+
+  useEffect(() => {
+    async function loadPatients() {
+      const data = await api.patients.getAll();
+      setPatients(data);
+    }
+    loadPatients();
+  }, []);
+
+  return (
+    <div>
+      <h2>Patients</h2>
+      <ul>
+        {patients.map((patient) => (
+          <li
+            key={patient.id}
+            onClick={() => setSelectedPatient(patient)}
+            style={{
+              fontWeight: selectedPatient?.id === patient.id ? 'bold' : 'normal',
+            }}
+          >
+            {patient.nombres} {patient.apellidos}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Conditional rendering based on selection
+
+```tsx ClinicalHistory.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+
+export function ClinicalHistory() {
+  const { selectedPatient } = useSelectedPatient();
+
+  if (!selectedPatient) {
+    return (
+      <div>
+        <p>Please select a patient to view their clinical history</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1>Clinical History</h1>
+      <h2>
+        {selectedPatient.nombres} {selectedPatient.apellidos}
+      </h2>
+      {/* Display clinical history */}
+    </div>
+  );
+}
+```
+
+### Creating records for selected patient
+
+```tsx VitalSigns.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+import { useState } from 'react';
+import { api } from './lib/api';
+
+export function VitalSigns() {
+  const { selectedPatient } = useSelectedPatient();
+  const [bloodPressure, setBloodPressure] = useState('');
+  const [heartRate, setHeartRate] = useState('');
+
+  if (!selectedPatient) {
+    return <div>No patient selected</div>;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    await api.vitalSigns.create({
+      paciente_id: selectedPatient.id,
+      presion_arterial: bloodPressure,
+      frecuencia_cardiaca: heartRate,
+      fecha: new Date().toISOString(),
+    });
+
+    // Reset form
+    setBloodPressure('');
+    setHeartRate('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Vital Signs for {selectedPatient.nombres}</h2>
+      
+      <label>
+        Blood Pressure:
+        <input
+          value={bloodPressure}
+          onChange={(e) => setBloodPressure(e.target.value)}
+          required
+        />
+      </label>
+
+      <label>
+        Heart Rate:
+        <input
+          value={heartRate}
+          onChange={(e) => setHeartRate(e.target.value)}
+          required
+        />
+      </label>
+
+      <button type="submit">Save</button>
+    </form>
+  );
+}
+```
+
+### Navigation with patient context
+
+```tsx PatientCard.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+import { useNavigate } from 'react-router-dom';
+
+interface PatientCardProps {
+  patient: Patient;
+}
+
+export function PatientCard({ patient }: PatientCardProps) {
+  const { setSelectedPatient } = useSelectedPatient();
+  const navigate = useNavigate();
+
+  const handleViewDetails = () => {
+    setSelectedPatient(patient);
+    navigate('/patient-details');
+  };
+
+  return (
+    <div className="patient-card">
+      <h3>{patient.nombres} {patient.apellidos}</h3>
+      <p>{patient.email}</p>
+      <button onClick={handleViewDetails}>View Details</button>
+    </div>
+  );
+}
+```
+
+### Clearing selection
+
+```tsx PatientHeader.tsx
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+import { useNavigate } from 'react-router-dom';
+
+export function PatientHeader() {
+  const { selectedPatient, setSelectedPatient } = useSelectedPatient();
+  const navigate = useNavigate();
+
+  if (!selectedPatient) return null;
+
+  const handleClearSelection = () => {
+    setSelectedPatient(null);
+    navigate('/patients');
+  };
+
+  return (
+    <div className="patient-header">
+      <h2>{selectedPatient.nombres} {selectedPatient.apellidos}</h2>
+      <button onClick={handleClearSelection}>Back to Patient List</button>
+    </div>
+  );
+}
+```
+
+## Implementation details
+
+### State management
+
+The context uses React's `useState` to manage the selected patient. When a patient is selected, all components using the `useSelectedPatient` hook will re-render with the new patient data.
+
+### Performance
+
+The context value is memoized using `useMemo` to prevent unnecessary re-renders of child components:
+
+```tsx
+const contextValue = useMemo(() => ({
+  selectedPatient,
+  setSelectedPatient
+}), [selectedPatient]);
+```
+
+### Common patterns
+
+**Guard against no selection:**
+
+```tsx
+const { selectedPatient } = useSelectedPatient();
+
+if (!selectedPatient) {
+  return <NoPatientSelected />;
+}
+
+// Safe to use selectedPatient here
+```
+
+**Persist across routes:**
+
+The selected patient persists as you navigate between routes, making it ideal for multi-page patient workflows (clinical history, prescriptions, vital signs, etc.).
+
+**Clear on logout:**
+
+```tsx
+import { useAuth } from './contexts/AuthContext';
+import { useSelectedPatient } from './contexts/SelectedPatientContext';
+import { useEffect } from 'react';
+
+export function App() {
+  const { user } = useAuth();
+  const { setSelectedPatient } = useSelectedPatient();
+
+  useEffect(() => {
+    if (!user) {
+      // Clear patient selection when user logs out
+      setSelectedPatient(null);
+    }
+  }, [user, setSelectedPatient]);
+
+  return <YourApp />;
+}
+```

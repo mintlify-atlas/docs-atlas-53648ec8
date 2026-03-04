@@ -1,0 +1,213 @@
+---
+title: useIdleTimer
+description: Custom hook for tracking user inactivity and triggering actions after a period of idle time
+---
+
+The `useIdleTimer` hook monitors user activity and provides a countdown mechanism before triggering a timeout action, such as auto-logout or session warnings.
+
+## Import
+
+```typescript
+import { useIdleTimer } from '../hooks/useIdleTimer';
+```
+
+## Parameters
+
+<ParamField path="idleTimeoutMs" type="number" required>
+  The duration in milliseconds of user inactivity before starting the countdown.
+</ParamField>
+
+<ParamField path="countdownDurationMs" type="number" required>
+  The duration in milliseconds for the countdown warning period.
+</ParamField>
+
+<ParamField path="onTimeout" type="() => void" required>
+  Callback function that is invoked when the countdown completes without user activity.
+</ParamField>
+
+## Usage
+
+<CodeGroup>
+```tsx Auto-logout with warning
+import { useIdleTimer } from '../../hooks/useIdleTimer';
+import { useAuth } from '../../hooks/useAuth';
+
+export function Agenda() {
+  const { signOut } = useAuth();
+  const [showWarning, setShowWarning] = useState(false);
+
+  const { remainingTime, isCountingDown, resetTimer } = useIdleTimer({
+    idleTimeoutMs: 5 * 60 * 1000, // 5 minutes of inactivity
+    countdownDurationMs: 60 * 1000, // 60 seconds warning
+    onTimeout: async () => {
+      await signOut();
+      window.location.href = '/login';
+    }
+  });
+
+  useEffect(() => {
+    if (isCountingDown) {
+      setShowWarning(true);
+    } else {
+      setShowWarning(false);
+    }
+  }, [isCountingDown]);
+
+  return (
+    <div>
+      {showWarning && (
+        <IdleWarningModal
+          remainingTime={remainingTime}
+          onContinue={() => {
+            resetTimer();
+            setShowWarning(false);
+          }}
+        />
+      )}
+      {/* Rest of component */}
+    </div>
+  );
+}
+```
+
+```tsx Session timeout notification
+import { useIdleTimer } from '../hooks/useIdleTimer';
+
+export function SessionMonitor() {
+  const { remainingTime, isCountingDown } = useIdleTimer({
+    idleTimeoutMs: 10 * 60 * 1000, // 10 minutes
+    countdownDurationMs: 2 * 60 * 1000, // 2 minutes warning
+    onTimeout: () => {
+      alert('Your session has expired due to inactivity');
+      // Handle session expiration
+    }
+  });
+
+  if (!isCountingDown) return null;
+
+  return (
+    <div className="session-warning">
+      <p>Your session will expire in {remainingTime} seconds</p>
+      <p>Move your mouse or press any key to continue</p>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+## Return value
+
+The hook returns an object with the following properties:
+
+<ResponseField name="remainingTime" type="number">
+  The number of seconds remaining in the countdown. Returns `0` when not counting down or after timeout.
+</ResponseField>
+
+<ResponseField name="isCountingDown" type="boolean">
+  Indicates whether the countdown warning period is active. Set to `true` when the idle timeout has elapsed and countdown has started.
+</ResponseField>
+
+<ResponseField name="resetTimer" type="() => void">
+  Function to manually reset the idle timer and cancel any ongoing countdown. Useful for "Stay logged in" buttons or manual activity triggers.
+</ResponseField>
+
+## Activity detection
+
+The hook automatically monitors the following user activity events:
+
+- `mousedown` - Mouse button press
+- `mousemove` - Mouse movement
+- `keypress` - Keyboard key press
+- `scroll` - Page scrolling
+- `touchstart` - Touch screen interaction
+- `click` - Mouse click
+
+Any of these events will reset the idle timer (unless the countdown is already in progress).
+
+## Behavior
+
+1. **Idle phase**: After the specified `idleTimeoutMs` period without user activity, the countdown begins
+2. **Countdown phase**: During this phase, `isCountingDown` is `true` and `remainingTime` counts down from the total countdown duration
+3. **Timeout**: When the countdown reaches zero, the `onTimeout` callback is invoked
+4. **Reset**: User activity during the idle phase resets the timer, but activity during the countdown phase is ignored (you must manually call `resetTimer()`)
+
+## Example: Idle warning modal
+
+```tsx
+interface IdleWarningModalProps {
+  remainingTime: number;
+  onContinue: () => void;
+}
+
+function IdleWarningModal({ remainingTime, onContinue }: IdleWarningModalProps) {
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <h2>Still there?</h2>
+        <p>
+          Your session will expire in {remainingTime} seconds due to inactivity.
+        </p>
+        <button onClick={onContinue}>
+          Continue working
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+## Cleanup
+
+The hook automatically cleans up all event listeners and timers when the component unmounts. No manual cleanup is required.
+
+## Implementation details
+
+The hook uses three types of timers:
+
+1. **Idle timer**: Tracks the initial period of inactivity
+2. **Countdown timer**: The final timeout that triggers the callback
+3. **Countdown interval**: Updates the `remainingTime` every second
+
+All timers are properly cleaned up on unmount or when reset.
+
+## Type definitions
+
+```typescript ~/workspace/source/src/hooks/useIdleTimer.ts
+interface UseIdleTimerOptions {
+  idleTimeoutMs: number;
+  countdownDurationMs: number;
+  onTimeout: () => void;
+}
+
+interface UseIdleTimerReturn {
+  remainingTime: number;
+  isCountingDown: boolean;
+  resetTimer: () => void;
+}
+```
+
+## Common use cases
+
+- Auto-logout for medical practice management systems (HIPAA compliance)
+- Session timeout warnings
+- Inactivity monitoring for security-sensitive applications
+- Automatic data saving before session expiration
+- User presence detection
+
+## Best practices
+
+<Note>
+  **Security consideration**: For medical applications, implement appropriate idle timeouts to comply with HIPAA and data protection regulations. A common pattern is:
+  - 5-10 minutes idle timeout
+  - 30-60 seconds countdown warning
+  - Automatic logout on timeout
+</Note>
+
+<Warning>
+  **User experience**: Always provide a clear warning modal during the countdown phase so users can extend their session. Avoid silent logouts that may result in data loss.
+</Warning>
+
+## Related
+
+- [useAuth](/api/hooks/use-auth) - Authentication hook for handling sign-out
+- [Authentication Guide](/guides/authentication) - Best practices for authentication and session handling

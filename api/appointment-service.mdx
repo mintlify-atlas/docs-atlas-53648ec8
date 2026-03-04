@@ -1,0 +1,602 @@
+---
+title: Appointment service
+description: Manage medical appointments and schedules in DoctorSoft+
+---
+
+The Appointment Service provides comprehensive methods to manage medical appointments, including creation, retrieval, updates, status transitions, and availability checks.
+
+## Methods
+
+### getAll
+
+Retrieve all appointments with patient and status information.
+
+```typescript
+appointments.getAll(): Promise<Appointment[]>
+```
+
+**Returns:**
+Array of appointments ordered by date and time (ascending).
+
+<ResponseField name="appointments" type="array">
+  Each appointment includes:
+  
+  <ResponseField name="id" type="string">
+    Appointment UUID
+  </ResponseField>
+  
+  <ResponseField name="fecha_cita" type="string">
+    Appointment date (YYYY-MM-DD)
+  </ResponseField>
+  
+  <ResponseField name="hora_cita" type="string">
+    Appointment time (HH:MM)
+  </ResponseField>
+  
+  <ResponseField name="estado" type="number">
+    Status ID
+  </ResponseField>
+  
+  <ResponseField name="estado_nombre" type="string">
+    Status name (e.g., 'Programada', 'Completada')
+  </ResponseField>
+  
+  <ResponseField name="patients" type="object">
+    Patient information (id, Nombre, Paterno, Materno)
+  </ResponseField>
+  
+  <ResponseField name="motivo" type="string">
+    Appointment reason
+  </ResponseField>
+  
+  <ResponseField name="urgente" type="boolean">
+    Whether the appointment is urgent
+  </ResponseField>
+  
+  <ResponseField name="consultorio" type="number">
+    Office/room number
+  </ResponseField>
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From Calendar.tsx
+const appointments = await api.appointments.getAll();
+console.log(`Total appointments: ${appointments.length}`);
+```
+
+**Cache:**
+Results are cached for 20 minutes.
+
+---
+
+### getById
+
+Retrieve a single appointment by ID.
+
+```typescript
+appointments.getById(id: string): Promise<Appointment | null>
+```
+
+<ParamField path="id" type="string" required>
+  The appointment's unique identifier (UUID)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From CitasPage.tsx
+const fetchedAppointment = await api.appointments.getById(appointmentId);
+if (fetchedAppointment) {
+  console.log(`Appointment: ${fetchedAppointment.motivo}`);
+}
+```
+
+---
+
+### getByPatientId
+
+Retrieve all appointments for a specific patient.
+
+```typescript
+appointments.getByPatientId(patientId: string): Promise<Appointment[]>
+```
+
+<ParamField path="patientId" type="string" required>
+  The patient's unique identifier (UUID)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From Layout.tsx
+const patientAppointments = await api.appointments.getByPatientId(selectedPatient.id);
+const upcoming = patientAppointments.filter(apt => apt.estado === 1);
+```
+
+**Cache:**
+Results are cached with key `patient_${patientId}`.
+
+---
+
+### getByDateRange
+
+Retrieve appointments within a date range.
+
+```typescript
+appointments.getByDateRange(
+  startDate: string,
+  endDate: string
+): Promise<Appointment[]>
+```
+
+<ParamField path="startDate" type="string" required>
+  Start date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField path="endDate" type="string" required>
+  End date in YYYY-MM-DD format
+</ParamField>
+
+**Example:**
+
+```typescript
+const appointments = await api.appointments.getByDateRange(
+  '2024-01-01',
+  '2024-01-31'
+);
+```
+
+**Returns:**
+Appointments ordered by date descending, including full patient details.
+
+---
+
+### getByDateAndConsultorio
+
+Retrieve appointments for a specific date and office.
+
+```typescript
+appointments.getByDateAndConsultorio(
+  fecha: string,
+  consultorio: number
+): Promise<Appointment[]>
+```
+
+<ParamField path="fecha" type="string" required>
+  Date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField path="consultorio" type="number" required>
+  Office/room number
+</ParamField>
+
+**Example:**
+
+```typescript
+const dayAppointments = await api.appointments.getByDateAndConsultorio(
+  '2024-03-15',
+  1
+);
+```
+
+**Cache:**
+Results are cached with key `date_consultorio_${fecha}_${consultorio}`.
+
+---
+
+### createSecure
+
+Create a new appointment using the secure RPC function.
+
+```typescript
+appointments.createSecure(dto: AppointmentDTO): Promise<Appointment>
+```
+
+<ParamField path="dto" type="object" required>
+  Appointment data transfer object
+  
+  <ParamField path="dto.id_paciente" type="string" required>
+    Patient UUID
+  </ParamField>
+  
+  <ParamField path="dto.fecha_cita" type="string" required>
+    Appointment date (YYYY-MM-DD)
+  </ParamField>
+  
+  <ParamField path="dto.hora_cita" type="string" required>
+    Appointment time (HH:MM)
+  </ParamField>
+  
+  <ParamField path="dto.motivo" type="string" required>
+    Reason for appointment
+  </ParamField>
+  
+  <ParamField path="dto.consultorio" type="number" required>
+    Office/room number
+  </ParamField>
+  
+  <ParamField path="dto.duracion_minutos" type="number" required>
+    Duration in minutes
+  </ParamField>
+  
+  <ParamField path="dto.tipo_consulta" type="string" required>
+    Consultation type
+  </ParamField>
+  
+  <ParamField path="dto.tiempo_evolucion" type="number">
+    Evolution time (numeric value)
+  </ParamField>
+  
+  <ParamField path="dto.unidad_tiempo" type="'horas' | 'dias' | 'semanas' | 'meses'">
+    Time unit for evolution
+  </ParamField>
+  
+  <ParamField path="dto.sintomas_asociados" type="string[]">
+    Associated symptoms array
+  </ParamField>
+  
+  <ParamField path="dto.urgente" type="boolean">
+    Whether appointment is urgent
+  </ParamField>
+  
+  <ParamField path="dto.notas" type="string">
+    Additional notes
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From CitasPage.tsx
+const createPayload = {
+  id_paciente: selectedPatient.id,
+  fecha_cita: '2024-03-20',
+  hora_cita: '10:00',
+  motivo: 'Consulta general',
+  consultorio: 1,
+  duracion_minutos: 30,
+  tipo_consulta: 'Primera vez',
+  urgente: false
+};
+
+const result = await api.appointments.createSecure(createPayload);
+```
+
+**Note:**
+This method uses the `agendar_cita` RPC function which automatically retrieves `user_id` and `idbu` from the authenticated session.
+
+**Cache invalidation:**
+Clears `'all'`, `patient_${id_paciente}`, and `date_consultorio_${fecha}_${consultorio}` caches.
+
+---
+
+### update
+
+Update an existing appointment.
+
+```typescript
+appointments.update(
+  id: string,
+  dto: Partial<AppointmentDTO>,
+  newStatusId?: number
+): Promise<Appointment>
+```
+
+<ParamField path="id" type="string" required>
+  Appointment UUID
+</ParamField>
+
+<ParamField path="dto" type="object" required>
+  Partial appointment data to update
+</ParamField>
+
+<ParamField path="newStatusId" type="number">
+  Optional new status ID (triggers history record)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From CitasPage.tsx
+const updatePayload = {
+  hora_cita: '11:00',
+  notas: 'Patient requested time change'
+};
+
+await api.appointments.update(
+  editingAppointment.id,
+  updatePayload,
+  2 // New status: Confirmada
+);
+```
+
+**History tracking:**
+If `newStatusId` is provided, a record is inserted into `tcCitasHistorial` tracking the status change.
+
+---
+
+### changeStatus
+
+Change appointment status and record in history.
+
+```typescript
+appointments.changeStatus(
+  appointmentId: string,
+  newStatusId: number,
+  notas?: string
+): Promise<{ success: true }>
+```
+
+<ParamField path="appointmentId" type="string" required>
+  Appointment UUID
+</ParamField>
+
+<ParamField path="newStatusId" type="number" required>
+  New status ID
+</ParamField>
+
+<ParamField path="notas" type="string">
+  Optional notes about the status change
+</ParamField>
+
+**Example:**
+
+```typescript
+await api.appointments.changeStatus(
+  appointmentId,
+  4, // Completada
+  'Patient attended successfully'
+);
+```
+
+---
+
+### checkSlotAvailability
+
+Check if a time slot is available for scheduling.
+
+```typescript
+appointments.checkSlotAvailability(
+  fecha: string,
+  hora_inicio: string,
+  duracion_minutos: number,
+  consultorio: number
+): Promise<{ available: boolean; reason: string }>
+```
+
+<ParamField path="fecha" type="string" required>
+  Date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField path="hora_inicio" type="string" required>
+  Start time (HH:MM)
+</ParamField>
+
+<ParamField path="duracion_minutos" type="number" required>
+  Duration in minutes
+</ParamField>
+
+<ParamField path="consultorio" type="number" required>
+  Office/room number
+</ParamField>
+
+**Example:**
+
+```typescript
+const slot = await api.appointments.checkSlotAvailability(
+  '2024-03-20',
+  '10:00',
+  30,
+  1
+);
+
+if (slot.available) {
+  console.log('Slot is available!');
+} else {
+  console.log(`Not available: ${slot.reason}`);
+}
+```
+
+**RPC function:**
+Uses the `verificar_slot` database function.
+
+---
+
+### getAllowedStatusTransitions
+
+Get allowed status transitions from current status.
+
+```typescript
+appointments.getAllowedStatusTransitions(
+  currentStatusId: number
+): Promise<number[]>
+```
+
+<ParamField path="currentStatusId" type="number" required>
+  Current appointment status ID
+</ParamField>
+
+**Returns:**
+Array of allowed destination status IDs.
+
+**Example:**
+
+```typescript
+const allowedStatuses = await api.appointments.getAllowedStatusTransitions(1);
+// Returns: [2, 6, 11] - Can transition to Confirmada, Cancelada, or Urgencia
+```
+
+---
+
+### getFilteredStatusOptions
+
+Get filtered status options based on current status.
+
+```typescript
+appointments.getFilteredStatusOptions(
+  currentStatusId?: number
+): Promise<Status[]>
+```
+
+<ParamField path="currentStatusId" type="number">
+  Current status ID (undefined for new appointments)
+</ParamField>
+
+**Returns:**
+Array of status objects that are valid transitions.
+
+**Example:**
+
+```typescript
+// For new appointment
+const initialStatuses = await api.appointments.getFilteredStatusOptions();
+// Returns: Programada (1) and Urgencia (11)
+
+// For existing appointment
+const nextStatuses = await api.appointments.getFilteredStatusOptions(1);
+// Returns valid transitions from Programada
+```
+
+---
+
+### getAppointmentHistory
+
+Retrieve change history for an appointment.
+
+```typescript
+appointments.getAppointmentHistory(
+  appointmentId: string
+): Promise<HistoryRecord[]>
+```
+
+<ParamField path="appointmentId" type="string" required>
+  Appointment UUID
+</ParamField>
+
+**Returns:**
+Array of history records with status changes, ordered by most recent first.
+
+<ResponseField name="history" type="array">
+  <ResponseField name="id" type="string">
+    History record ID
+  </ResponseField>
+  
+  <ResponseField name="estado_anterior" type="number">
+    Previous status ID
+  </ResponseField>
+  
+  <ResponseField name="estado_nuevo" type="number">
+    New status ID
+  </ResponseField>
+  
+  <ResponseField name="estado_anterior_nombre" type="string">
+    Previous status name
+  </ResponseField>
+  
+  <ResponseField name="estado_nuevo_nombre" type="string">
+    New status name
+  </ResponseField>
+  
+  <ResponseField name="usuario_nombre" type="string">
+    User who made the change
+  </ResponseField>
+  
+  <ResponseField name="created_at" type="string">
+    When the change occurred
+  </ResponseField>
+  
+  <ResponseField name="notas" type="string">
+    Notes about the change
+  </ResponseField>
+</ResponseField>
+
+**Cache:**
+Results are cached for 5 minutes.
+
+---
+
+## Status management
+
+### getEstados
+
+Get all appointment statuses.
+
+```typescript
+appointments.getEstados(): Promise<Status[]>
+```
+
+**Returns:**
+Array of all available appointment statuses.
+
+---
+
+### getAllStatuses
+
+Alias for `getEstados` - get all appointment statuses.
+
+```typescript
+appointments.getAllStatuses(): Promise<Status[]>
+```
+
+---
+
+## Type definitions
+
+```typescript
+interface Appointment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  id_paciente: string;
+  id_user: string | null;
+  fecha_cita: string;
+  hora_cita: string;
+  motivo: string;
+  estado: number;
+  estado_nombre: string;
+  notas: string | null;
+  urgente: boolean;
+  consultorio: number;
+  tipo_consulta: string;
+  tiempo_evolucion: number | null;
+  unidad_tiempo: 'horas' | 'dias' | 'semanas' | 'meses' | null;
+  sintomas_asociados: string[] | null;
+  hora_fin: string;
+  duracion_minutos: number | null;
+  idBu: string | null;
+  patients?: {
+    id: string;
+    Nombre: string;
+    Paterno: string;
+    Materno: string;
+  };
+}
+
+interface Status {
+  id: number;
+  estado: string;
+  descripcion: string;
+  usocita: string;
+}
+```
+
+## Source location
+
+`~/workspace/source/src/services/appointmentService.ts`
+
+## Related services
+
+- [Patient service](/api/patient-service) - Manage patient records
+- [Activity service](/api/activity-service) - Track appointment-related activities

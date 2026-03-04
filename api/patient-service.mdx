@@ -1,0 +1,276 @@
+---
+title: Patient service
+description: Manage patient records in DoctorSoft+
+---
+
+The Patient Service provides methods to create, read, and update patient records in the system. All operations are cached for improved performance.
+
+## Methods
+
+### getAll
+
+Retrieve all patients in the system.
+
+```typescript
+patients.getAll(): Promise<Patient[]>
+```
+
+<ParamField path="returns" type="Promise<Patient[]>">
+  Array of patient objects with basic information
+</ParamField>
+
+**Returns:**
+Patient objects include: `id`, `Nombre`, `Paterno`, `Materno`, `FechaNacimiento`, `Sexo`, `Telefono`, `Email`, `Refiere`
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const patients = await api.patients.getAll();
+console.log(`Found ${patients.length} patients`);
+```
+
+**Cache:**
+Results are cached for 20 minutes with key `'all'`.
+
+---
+
+### getById
+
+Retrieve a single patient by ID with complete information.
+
+```typescript
+patients.getById(id: string): Promise<Patient | null>
+```
+
+<ParamField path="id" type="string" required>
+  The patient's unique identifier (UUID)
+</ParamField>
+
+<ResponseField name="patient" type="object">
+  Complete patient record including all fields:
+  
+  <ResponseField name="id" type="string">
+    Patient UUID
+  </ResponseField>
+  
+  <ResponseField name="Nombre" type="string">
+    First name
+  </ResponseField>
+  
+  <ResponseField name="Paterno" type="string">
+    Paternal last name
+  </ResponseField>
+  
+  <ResponseField name="Materno" type="string">
+    Maternal last name
+  </ResponseField>
+  
+  <ResponseField name="FechaNacimiento" type="string">
+    Date of birth (ISO 8601 format)
+  </ResponseField>
+  
+  <ResponseField name="Sexo" type="string">
+    Gender (Masculino/Femenino)
+  </ResponseField>
+  
+  <ResponseField name="Email" type="string | null">
+    Email address
+  </ResponseField>
+  
+  <ResponseField name="Telefono" type="string | null">
+    Phone number
+  </ResponseField>
+  
+  <ResponseField name="CURP" type="string | null">
+    Mexican national ID
+  </ResponseField>
+  
+  <ResponseField name="user_id" type="string">
+    ID of the user who created the record
+  </ResponseField>
+  
+  <ResponseField name="idbu" type="string">
+    Business unit ID
+  </ResponseField>
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From PatientReport.tsx
+const data = await api.patients.getById(patientId);
+if (data) {
+  console.log(`Patient: ${data.Nombre} ${data.Paterno}`);
+}
+```
+
+**Cache:**
+Results are cached for 20 minutes with key `by_${id}`.
+
+---
+
+### create
+
+Create a new patient record.
+
+```typescript
+patients.create(payload: PatientPayload): Promise<Patient>
+```
+
+<ParamField path="payload" type="object" required>
+  Patient data object
+  
+  <ParamField path="payload.Nombre" type="string" required>
+    First name
+  </ParamField>
+  
+  <ParamField path="payload.Paterno" type="string" required>
+    Paternal last name
+  </ParamField>
+  
+  <ParamField path="payload.Materno" type="string">
+    Maternal last name
+  </ParamField>
+  
+  <ParamField path="payload.FechaNacimiento" type="string" required>
+    Date of birth (ISO 8601 format)
+  </ParamField>
+  
+  <ParamField path="payload.Sexo" type="string" required>
+    Gender (Masculino/Femenino)
+  </ParamField>
+  
+  <ParamField path="payload.Email" type="string">
+    Email address
+  </ParamField>
+  
+  <ParamField path="payload.Telefono" type="string">
+    Phone number
+  </ParamField>
+  
+  <ParamField path="payload.CURP" type="string">
+    Mexican national ID
+  </ParamField>
+  
+  <ParamField path="payload.EstadoCivil" type="string">
+    Marital status
+  </ParamField>
+  
+  <ParamField path="payload.Alergias" type="string[]">
+    List of allergies
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From PatientForm.tsx
+const patientData = {
+  Nombre: 'Juan',
+  Paterno: 'Pérez',
+  Materno: 'García',
+  FechaNacimiento: '1990-05-15',
+  Sexo: 'Masculino',
+  Email: 'juan.perez@example.com',
+  Telefono: '5551234567',
+  EstadoCivil: 'Soltero'
+};
+
+const savedPatient = await api.patients.create(patientData);
+console.log(`Created patient with ID: ${savedPatient.id}`);
+```
+
+**Cache invalidation:**
+Clears the `'all'` cache key after creation.
+
+---
+
+### update
+
+Update an existing patient record.
+
+```typescript
+patients.update(id: string, payload: Partial<PatientPayload>): Promise<Patient>
+```
+
+<ParamField path="id" type="string" required>
+  The patient's unique identifier (UUID)
+</ParamField>
+
+<ParamField path="payload" type="object" required>
+  Partial patient data object with fields to update
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// From PatientForm.tsx
+const updatedData = {
+  Email: 'new.email@example.com',
+  Telefono: '5559876543'
+};
+
+const savedPatient = await api.patients.update(patient.id, updatedData);
+```
+
+**Error handling:**
+Throws an error with message `'No se pudo actualizar el paciente'` if the update fails.
+
+**Cache invalidation:**
+Clears both `'all'` and `by_${id}` cache keys after update.
+
+---
+
+## Type definitions
+
+```typescript
+interface Patient {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  Nombre: string;
+  Paterno: string;
+  Materno: string;
+  FechaNacimiento: string;
+  CURP: string | null;
+  RFC: string | null;
+  Sexo: string;
+  EstadoCivil: string;
+  Email: string | null;
+  Telefono: string | null;
+  Calle: string | null;
+  Colonia: string | null;
+  CodigoPostal: string | null;
+  Poblacion: string | null;
+  Municipio: string | null;
+  EntidadFederativa: string | null;
+  Ocupacion: string | null;
+  TipoSangre: string | null;
+  Alergias: string[] | null;
+  ContactoEmergencia: string | null;
+  Aseguradora: string | null;
+  Responsable: string | null;
+  Refiere: string | null;
+  Observaciones: string | null;
+  deleted_at: string | null;
+  user_id: string | null;
+  idbu: string;
+}
+```
+
+## Source location
+
+`~/workspace/source/src/services/patientService.ts`
+
+## Related services
+
+- [Appointment service](/api/appointment-service) - Schedule appointments for patients
+- [Activity service](/api/activity-service) - Track patient-related activities

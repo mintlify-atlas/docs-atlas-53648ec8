@@ -1,0 +1,281 @@
+---
+title: useTheme
+description: Custom hook to access and manage theme settings, including colors, fonts, and button styles
+---
+
+The `useTheme` hook provides access to the application's theming system, allowing components to react to theme changes and update theme settings.
+
+## Import
+
+```typescript
+import { useTheme } from '../contexts/ThemeContext';
+```
+
+## Usage
+
+<CodeGroup>
+```tsx Basic theme access
+import { useTheme } from '../contexts/ThemeContext';
+
+export function Dashboard() {
+  const { currentTheme } = useTheme();
+
+  return (
+    <div style={{ 
+      backgroundColor: currentTheme.colors.background,
+      color: currentTheme.colors.text 
+    }}>
+      <h1>Dashboard</h1>
+    </div>
+  );
+}
+```
+
+```tsx Theme switcher
+import { useTheme } from '../contexts/ThemeContext';
+
+export function ThemeSwitcher() {
+  const { currentTheme, setTheme } = useTheme();
+
+  return (
+    <select 
+      value={currentTheme.id} 
+      onChange={(e) => setTheme(e.target.value as ThemeType)}
+    >
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="professional">Professional</option>
+      <option value="modern">Modern</option>
+    </select>
+  );
+}
+```
+
+```tsx Font size control
+import { useTheme } from '../contexts/ThemeContext';
+
+export function FontSizeControl() {
+  const { fontSize, setFontSize } = useTheme();
+
+  return (
+    <div>
+      <label>Font Size: {fontSize}%</label>
+      <input
+        type="range"
+        min="80"
+        max="120"
+        value={fontSize}
+        onChange={(e) => setFontSize(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+```
+
+```tsx Button style selector
+import { useTheme } from '../contexts/ThemeContext';
+
+export function ButtonStyleSelector() {
+  const { buttonStyle, setButtonStyle } = useTheme();
+
+  return (
+    <div>
+      <button onClick={() => setButtonStyle('rounded')}>Rounded</button>
+      <button onClick={() => setButtonStyle('square')}>Square</button>
+      <button onClick={() => setButtonStyle('pill')}>Pill</button>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+## Return value
+
+The hook returns an object with the following properties:
+
+<ResponseField name="currentTheme" type="Theme">
+  The currently active theme object containing all theme configuration.
+
+  <Expandable title="Theme properties">
+    <ResponseField name="id" type="ThemeType">
+      Unique theme identifier (e.g., "light", "dark", "professional")
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Display name for the theme
+    </ResponseField>
+    
+    <ResponseField name="colors" type="object">
+      Color palette for the theme
+      
+      <Expandable title="Color properties">
+        <ResponseField name="primary" type="string">Primary brand color</ResponseField>
+        <ResponseField name="secondary" type="string">Secondary accent color</ResponseField>
+        <ResponseField name="background" type="string">Page background color</ResponseField>
+        <ResponseField name="surface" type="string">Surface/card background color</ResponseField>
+        <ResponseField name="text" type="string">Primary text color</ResponseField>
+        <ResponseField name="textSecondary" type="string">Secondary text color</ResponseField>
+        <ResponseField name="border" type="string">Border color</ResponseField>
+        <ResponseField name="sidebar" type="string">Sidebar background color</ResponseField>
+        <ResponseField name="sidebarText" type="string">Sidebar text color</ResponseField>
+        <ResponseField name="sidebarHover" type="string">Sidebar hover state color</ResponseField>
+        <ResponseField name="header" type="string">Header background color</ResponseField>
+        <ResponseField name="headerText" type="string">Header text color</ResponseField>
+        <ResponseField name="buttonPrimary" type="string">Primary button color</ResponseField>
+        <ResponseField name="buttonSecondary" type="string">Secondary button color</ResponseField>
+        <ResponseField name="buttonText" type="string">Button text color</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="typography" type="object">
+      Typography configuration
+      
+      <Expandable title="Typography properties">
+        <ResponseField name="fonts.headings" type="string">Font family for headings</ResponseField>
+        <ResponseField name="fonts.subheadings" type="string">Font family for subheadings</ResponseField>
+        <ResponseField name="fonts.body" type="string">Font family for body text</ResponseField>
+        <ResponseField name="fonts.ui" type="string">Font family for UI elements</ResponseField>
+        <ResponseField name="baseSize" type="number">Base font size in pixels</ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="buttons" type="object">
+      Button styling configuration
+      
+      <Expandable title="Button properties">
+        <ResponseField name="style" type="'rounded' | 'square' | 'pill'">Button shape style</ResponseField>
+        <ResponseField name="shadow" type="boolean">Whether buttons have shadows</ResponseField>
+        <ResponseField name="animation" type="boolean">Whether buttons are animated</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="setTheme" type="(themeId: ThemeType) => void">
+  Function to change the active theme. The theme selection is persisted to localStorage.
+</ResponseField>
+
+<ResponseField name="fontSize" type="number">
+  Current font size as a percentage (default: 100). Range typically 80-120.
+</ResponseField>
+
+<ResponseField name="setFontSize" type="(size: number) => void">
+  Function to update the font size percentage. The value is persisted to localStorage.
+</ResponseField>
+
+<ResponseField name="buttonStyle" type="'rounded' | 'square' | 'pill'">
+  Current button style preference.
+</ResponseField>
+
+<ResponseField name="setButtonStyle" type="(style: 'rounded' | 'square' | 'pill') => void">
+  Function to change the button style. The selection is persisted to localStorage.
+</ResponseField>
+
+## Available themes
+
+DoctorSoft+ includes the following built-in themes:
+
+- `light` - Light theme with blue accent
+- `dark` - Dark theme with blue accent
+- `professional` - Professional teal theme
+- `modern` - Modern purple theme
+- `minimal` - Minimalist gray theme
+- `ocean` - Ocean blue theme
+- `forest` - Forest green theme
+- `sunset` - Sunset orange theme
+- `forest-night` - Dark forest theme
+- `ocean-breeze` - Light ocean theme
+- `sunset-orange` - Bright sunset theme
+- `forest-green` - Deep forest theme
+- `terra-cotta` - Terra cotta earth tone
+- `sage-clay` - Sage and clay theme
+- `desert-sand` - Desert sand theme
+- `walnut-bark` - Walnut bark theme
+
+## Error handling
+
+The hook will throw an error if used outside of a `ThemeProvider`:
+
+```typescript
+if (context === undefined) {
+  throw new Error('useTheme must be used within a ThemeProvider');
+}
+```
+
+Make sure your component tree is wrapped with `ThemeProvider`:
+
+```tsx App.tsx
+import { ThemeProvider } from './contexts/ThemeContext';
+
+function App() {
+  return (
+    <ThemeProvider>
+      {/* Your app components */}
+    </ThemeProvider>
+  );
+}
+```
+
+## CSS variables
+
+The `ThemeProvider` automatically applies theme colors as CSS variables on the document root:
+
+```css
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #60A5FA;
+  --color-background: #F3F4F6;
+  --color-surface: #FFFFFF;
+  --color-text: #111827;
+  /* ... and more */
+  
+  --font-headings: "Plus Jakarta Sans", sans-serif;
+  --font-subheadings: "Montserrat", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-ui: "DM Sans", sans-serif;
+  
+  --user-font-size-percentage: 100;
+}
+```
+
+You can use these variables directly in your CSS:
+
+```css
+.my-component {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+```
+
+## Performance optimization
+
+The theme context is optimized to prevent unnecessary re-renders:
+
+- CSS variables are updated using `requestAnimationFrame`
+- Theme preferences are loaded synchronously on module load for instant theme application
+- Context value is memoized using `useMemo`
+- CSS variable updates are memoized to avoid recalculations
+
+## Type definitions
+
+```typescript ~/workspace/source/src/contexts/ThemeContext.tsx
+interface ThemeContextType {
+  currentTheme: Theme;
+  setTheme: (themeId: ThemeType) => void;
+  fontSize: number;
+  setFontSize: (size: number) => void;
+  buttonStyle: Theme['buttons']['style'];
+  setButtonStyle: (style: Theme['buttons']['style']) => void;
+}
+
+type ThemeType = 'light' | 'dark' | 'professional' | 'modern' | 
+  'minimal' | 'ocean' | 'forest' | 'sunset' | 'forest-night' | 
+  'ocean-breeze' | 'sunset-orange' | 'forest-green' | 'terra-cotta' | 
+  'sage-clay' | 'desert-sand' | 'walnut-bark';
+```
+
+## Related
+
+- [ThemeContext](/api/contexts/theme-context) - The underlying context provider
+- [Theming Guide](/guides/theming) - Complete guide to customizing themes

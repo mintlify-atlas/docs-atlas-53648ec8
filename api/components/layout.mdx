@@ -1,0 +1,282 @@
+---
+title: Layout components
+description: Core layout components for structuring the application interface, including main layout wrapper, sidebar navigation, and header.
+---
+
+## Overview
+
+The layout components provide the fundamental structure for DoctorSoft+ application pages. They handle navigation, patient context, and responsive behavior across desktop and mobile devices.
+
+## Layout
+
+The main layout wrapper component that provides the application structure with sidebar and header.
+
+### Props
+
+<ParamField path="children" type="React.ReactNode" required>
+  The page content to render within the layout
+</ParamField>
+
+### Usage
+
+```tsx
+import { Layout } from '@/components/Layout';
+
+function MyPage() {
+  return (
+    <Layout>
+      <div className="p-4">
+        <h1>Page Content</h1>
+      </div>
+    </Layout>
+  );
+}
+```
+
+### Features
+
+- Automatic patient context management
+- Responsive sidebar (collapsed on hover)
+- Patient selection and deselection
+- Real-time counts for clinical records
+- Appointment tracking (last and next)
+- Mobile-optimized layout
+
+### Internal state
+
+The Layout component manages:
+
+- Sidebar expansion state (`isExpanded`)
+- Clinical record counts (history, evolution, prescriptions, files, somatometry)
+- Patient appointment information
+- User information (from AuthContext)
+- Mobile detection
+
+---
+
+## Sidebar
+
+Collapsible navigation sidebar with role-based menu items.
+
+### Props
+
+<ParamField path="isExpanded" type="boolean" required>
+  Whether the sidebar is expanded or collapsed
+</ParamField>
+
+<ParamField path="setIsExpanded" type="(expanded: boolean) => void" required>
+  Callback to update expansion state
+</ParamField>
+
+<ParamField path="userRole" type="string | null | undefined" required>
+  Current user's role for filtering navigation items
+</ParamField>
+
+<ParamField path="packageVersion" type="string" required>
+  Application version to display in footer
+</ParamField>
+
+<ParamField path="handleLogout" type="() => void" required>
+  Logout handler function
+</ParamField>
+
+<ParamField path="isMobile" type="boolean" required>
+  Whether the current device is mobile
+</ParamField>
+
+<ParamField path="clinicalEvolutionCount" type="number" required>
+  Count of clinical evolution records to display as badge
+</ParamField>
+
+### Usage
+
+```tsx
+import { Sidebar } from '@/components/Sidebar';
+import packageJson from '../../package.json';
+
+function AppLayout() {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const { userRole } = useAuth();
+
+  return (
+    <Sidebar
+      isExpanded={isExpanded}
+      setIsExpanded={setIsExpanded}
+      userRole={userRole}
+      packageVersion={packageJson.version}
+      handleLogout={handleLogout}
+      isMobile={isMobile}
+      clinicalEvolutionCount={5}
+    />
+  );
+}
+```
+
+### Navigation items
+
+Base navigation items (~/workspace/source/src/components/Sidebar.tsx:8-14):
+
+- Dashboard (`/`)
+- Actividad (`/activity`)
+- Agenda (`/agenda/agenda`)
+- Pacientes (`/patients`)
+- Citas (`/appointments`)
+
+Bottom navigation items (~/workspace/source/src/components/Sidebar.tsx:15-20):
+
+- Unidades de Negocio (`/clinica`) - Admin only
+- Usuarios (`/users`) - Admin only
+- Configuración (`/settings`)
+- Cerrar Sesión
+
+### Behavior
+
+- Expands on mouse enter (desktop only)
+- Collapses on mouse leave (desktop only)
+- Shows tooltips when collapsed
+- Displays notification badges for counts
+- Filters items by user role
+
+---
+
+## MainHeader
+
+Header component displaying patient information or user info when no patient is selected.
+
+### Props
+
+<ParamField path="selectedPatient" type="Patient | null" required>
+  Currently selected patient object or null
+</ParamField>
+
+<ParamField path="userInfo" type="object" required>
+  User information object with fields:
+  - `authId: string`
+  - `nombre: string | null`
+  - `idbu: string | null`
+  - `business_name: string | null`
+  - `rol: string | null`
+</ParamField>
+
+<ParamField path="clinicalHistoryCount" type="number" required>
+  Count of clinical history records
+</ParamField>
+
+<ParamField path="clinicalEvolutionCount" type="number" required>
+  Count of clinical evolution records
+</ParamField>
+
+<ParamField path="prescriptionsCount" type="number" required>
+  Count of prescription records
+</ParamField>
+
+<ParamField path="patientFilesCount" type="number" required>
+  Count of patient file records
+</ParamField>
+
+<ParamField path="somatometryCount" type="number" required>
+  Count of somatometry records
+</ParamField>
+
+<ParamField path="lastAppointment" type="{ date: Date; status: string } | null" required>
+  Information about the patient's last appointment
+</ParamField>
+
+<ParamField path="nextAppointment" type="Date | null" required>
+  Date of the patient's next appointment
+</ParamField>
+
+<ParamField path="showContextMenu" type="boolean" required>
+  Whether the context menu is visible
+</ParamField>
+
+<ParamField path="handleContextMenuClick" type="(e: React.MouseEvent) => void" required>
+  Handler for context menu button clicks
+</ParamField>
+
+<ParamField path="handleDeselectPatient" type="(e: React.MouseEvent) => void" required>
+  Handler for deselecting the current patient
+</ParamField>
+
+<ParamField path="handleEditPatient" type="(e: React.MouseEvent) => void" required>
+  Handler for editing the current patient
+</ParamField>
+
+### Usage
+
+```tsx
+import { MainHeader } from '@/components/MainHeader';
+
+function App() {
+  const { selectedPatient } = useSelectedPatient();
+  const [userInfo, setUserInfo] = useState(...);
+
+  return (
+    <MainHeader
+      selectedPatient={selectedPatient}
+      userInfo={userInfo}
+      clinicalHistoryCount={12}
+      clinicalEvolutionCount={8}
+      prescriptionsCount={5}
+      patientFilesCount={3}
+      somatometryCount={2}
+      lastAppointment={{
+        date: new Date('2024-03-01'),
+        status: 'COMPLETA'
+      }}
+      nextAppointment={new Date('2024-03-15')}
+      showContextMenu={false}
+      handleContextMenuClick={handleContextMenu}
+      handleDeselectPatient={handleDeselect}
+      handleEditPatient={handleEdit}
+    />
+  );
+}
+```
+
+### Features
+
+#### When patient is selected
+
+- Patient avatar with initials
+- Full name display
+- Age, birth date, gender
+- Contact information (phone, email)
+- Last and next appointment dates
+- Referring physician
+- Context menu with actions:
+  - Deselect patient
+  - Edit patient
+  - Print patient data sheet
+  - Generate comprehensive clinical report
+
+#### Patient navigation
+
+Shows navigation tabs for medical/admin users (~/workspace/source/src/components/MainHeader.tsx:352-645):
+
+- **Ficha Clínica** (dropdown with submenu):
+  - Antecedentes Heredo-Familiares
+  - Antecedentes Patológicos
+  - Antecedentes no Patológicos
+  - Antecedentes Gineco-Obstétricos (female patients only)
+- **Evolución Clínica** (with count badge)
+- **Recetas** (with count badge)
+- **Archivos del Paciente** (with count badge)
+- **Somatometrías** (conditional, with count badge)
+- **Signos Vitales**
+
+#### When no patient is selected
+
+Displays user information:
+- Welcome message with user name
+- User role
+- Business unit assignment
+
+### Conditional rendering
+
+Somatometry tab only shows if:
+- Patient has existing somatometry records, OR
+- Patient is under 66 months old (5 years 6 months)
+
+See ~/workspace/source/src/components/MainHeader.tsx:156-171

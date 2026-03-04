@@ -1,0 +1,270 @@
+---
+title: Calendar
+description: Visual appointment scheduling with month and week views using FullCalendar
+---
+
+The calendar provides a visual interface for viewing and scheduling appointments across different time ranges. Built on FullCalendar, it offers month and week views with click-to-schedule functionality and color-coded appointment statuses.
+
+## Overview
+
+The calendar interface includes:
+
+<CardGroup cols={2}>
+  <Card title="Multiple views" icon="calendar-days">
+    Switch between month view and week view for different scheduling perspectives
+  </Card>
+  <Card title="Visual availability" icon="eye">
+    See occupied and available time slots at a glance
+  </Card>
+  <Card title="Click to schedule" icon="hand-pointer">
+    Click any time slot to create a new appointment
+  </Card>
+  <Card title="Status colors" icon="palette">
+    Appointments are color-coded by status for quick identification
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Calendar views
+
+**Month view (dayGridMonth)**:
+- Shows full month at a glance
+- Displays appointment count per day
+- Good for long-term planning
+- Click on a date to see appointments
+
+**Week view (timeGridWeek)**:
+- Shows one week with hourly time slots
+- Time range: 8:00 AM to 10:00 PM
+- 15-minute slot intervals
+- Default and recommended view for scheduling
+
+### Appointment display
+
+Each appointment on the calendar shows:
+
+- Patient name (Nombre + Paterno)
+- Appointment reason (motivo)
+- Time slot occupancy
+- Color-coded status:
+  - **Primary color**: Programada (Scheduled)
+  - **Green (#10B981)**: Completada (Completed)
+  - **Red (#EF4444)**: Cancelada (Cancelled)
+
+### Navigation
+
+- **Prev/Next buttons**: Move backward or forward by view period
+- **Today button**: Jump to current date
+- **View switcher**: Toggle between month and week views
+- Spanish locale with proper date/time formatting
+
+### Time slot configuration
+
+The calendar is configured with:
+
+- **Start time**: 8:00 AM
+- **End time**: 10:00 PM (22:00)
+- **Slot duration**: 15 minutes
+- **Default appointment duration**: 15 minutes
+- **No all-day slot**: Only time-based appointments
+
+## How to use
+
+### Viewing appointments
+
+<Steps>
+  <Step title="Access calendar">
+    Navigate to "Calendario" from the main menu
+  </Step>
+  
+  <Step title="Choose view">
+    Click "Semana" for week view or "Mes" for month view in the top-right corner
+  </Step>
+  
+  <Step title="Navigate dates">
+    Use the prev/next arrows to move through time, or click "Hoy" to return to today
+  </Step>
+  
+  <Step title="View appointment details">
+    Click on any appointment to see details and edit options
+  </Step>
+</Steps>
+
+### Creating an appointment from the calendar
+
+<Steps>
+  <Step title="Select a patient first">
+    Before using the calendar to schedule, select a patient from the "Pacientes" section. If no patient is selected, you'll see a warning.
+  </Step>
+  
+  <Step title="Choose the time">
+    In week view, click on the desired time slot to open the appointment form
+  </Step>
+  
+  <Step title="Fill appointment details">
+    The appointment modal will open with:
+    - Selected patient (pre-filled, read-only)
+    - Selected date and time (pre-filled, editable)
+    - Consultation room selector (Consultorio 1, 2, or 3)
+    - Reason for visit (required)
+  </Step>
+  
+  <Step title="Save appointment">
+    Click "Guardar" to create the appointment. It will appear on the calendar immediately.
+  </Step>
+</Steps>
+
+<Note>
+  If you attempt to create an appointment without selecting a patient first, a modal will prompt you to select a patient from the Pacientes section.
+</Note>
+
+### Editing an appointment
+
+<Steps>
+  <Step title="Click the appointment">
+    In the calendar view, click on the appointment you want to edit
+  </Step>
+  
+  <Step title="Modify details">
+    In the modal that opens:
+    - Change the date using the date picker
+    - Change the time
+    - Update the consultation room
+    - Edit the reason/motivo
+  </Step>
+  
+  <Step title="Update">
+    Click "Actualizar" to save changes. The calendar refreshes automatically.
+  </Step>
+</Steps>
+
+## Calendar configuration
+
+### Week view specifics
+
+The week view is configured for optimal appointment scheduling:
+
+- **First day of week**: Monday (firstDay: 1)
+- **Day header format**: Full day name and date (e.g., "lunes 15")
+- **Slot labels**: 24-hour format (e.g., "09:00", "14:30")
+- **Event time format**: 24-hour (e.g., "09:00 - 09:15")
+- **Selectable**: You can click any time slot to create appointments
+- **Select mirror**: Visual feedback when selecting time slots
+
+### Spanish localization
+
+The calendar uses Spanish locale (`es`) for:
+
+- Day names: lunes, martes, miércoles, etc.
+- Month names: enero, febrero, marzo, etc.
+- Button text: "Hoy", "Mes", "Semana"
+- Date formatting following Spanish conventions
+
+## Consultation rooms (Consultorios)
+
+When creating appointments from the calendar, you can assign them to specific consultation rooms:
+
+- **Consultorio 1**: Default selection
+- **Consultorio 2**: Alternative examination room
+- **Consultorio 3**: Third examination room
+
+This helps practices with multiple rooms avoid scheduling conflicts and manage patient flow.
+
+<Tip>
+  Use the week view filtered by consultation room to see availability in specific rooms. This helps when scheduling procedures that require particular equipment or room configurations.
+</Tip>
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use week view for daily scheduling">
+    The week view shows hourly slots and makes it easy to see availability and avoid double-booking. Use month view for long-term planning and overview.
+  </Accordion>
+  
+  <Accordion title="Color-code by status">
+    Take advantage of status colors to quickly identify:
+    - Green completed appointments (can close that time slot)
+    - Red cancelled appointments (time may be available)
+    - Primary color scheduled appointments (patient expected)
+  </Accordion>
+  
+  <Accordion title="Select patient before scheduling">
+    Always select the patient from the Pacientes module before creating appointments. This ensures the appointment is linked to the correct patient record.
+  </Accordion>
+  
+  <Accordion title="Verify time slot availability">
+    Before clicking to schedule, scan the calendar for existing appointments at that time. The system prevents double-booking, but visual checking helps avoid errors.
+  </Accordion>
+  
+  <Accordion title="Use consultation room assignments">
+    Assign appointments to specific consultorios to:
+    - Manage multiple providers
+    - Balance patient load across rooms
+    - Reserve rooms for specific procedure types
+  </Accordion>
+  
+  <Accordion title="Navigate efficiently">
+    Use keyboard or click patterns:
+    - Click "Hoy" to jump to current week
+    - Use prev/next arrows for sequential browsing
+    - Click month header to see full month overview
+  </Accordion>
+</AccordionGroup>
+
+## Integration with appointments module
+
+The calendar and appointments module work together seamlessly:
+
+- **Shared data**: Appointments created in either module appear in both
+- **Status sync**: Status changes in the appointments list update calendar colors
+- **Patient selection**: Same patient context applies to both
+- **Real-time updates**: Creating an appointment refreshes both views
+
+### When to use calendar vs. appointments list
+
+**Use the calendar when you need to:**
+- See visual availability across time
+- Schedule multiple appointments in sequence
+- Find the next available slot
+- View a provider's or room's schedule
+- Get a weekly or monthly overview
+
+**Use the appointments list when you need to:**
+- Search appointments by patient or reason
+- Change appointment status (Confirmada, En Consulta, etc.)
+- View appointment history and status changes
+- Filter by date range or status
+- See detailed appointment information in table format
+
+<Note>
+  Both interfaces work with the same underlying data. Choose based on your current task - visual scheduling vs. appointment management.
+</Note>
+
+## Responsive design
+
+The calendar adapts to different screen sizes:
+
+- **Desktop**: Full week view with all time slots visible
+- **Tablet**: Compressed week view, scrollable
+- **Mobile**: Consider using the appointments list for better mobile experience
+
+## FullCalendar features
+
+The calendar is built on FullCalendar and includes:
+
+- **Aspect ratio**: 2:1 for optimal viewing
+- **Sticky headers**: Date headers remain visible when scrolling
+- **Window resize handling**: Adapts to window size changes
+- **Expand rows**: Time slots expand to fill available space
+- **Day max events**: In month view, shows "+ X more" for crowded days
+
+These features ensure a smooth, professional scheduling experience.
+
+## Keyboard and accessibility
+
+- Tab through calendar controls
+- Arrow keys navigate between dates (in some views)
+- Click or Enter to select time slots
+- Escape to close modal dialogs
+- Screen reader support through FullCalendar's accessibility features

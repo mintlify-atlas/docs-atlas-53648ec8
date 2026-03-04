@@ -1,0 +1,204 @@
+---
+title: Patient management
+description: Learn how to register, search, and manage patient records in DoctorSoft+
+---
+
+The patient management module is the central hub for storing and accessing all patient information. It allows medical staff to create comprehensive patient profiles, search existing records, and maintain up-to-date demographic and clinical data.
+
+## Overview
+
+The patient management system provides:
+
+<CardGroup cols={2}>
+  <Card title="Patient registration" icon="user-plus">
+    Create new patient profiles with complete demographic and medical information
+  </Card>
+  <Card title="Patient search" icon="search">
+    Quickly find patients using the searchable patient list
+  </Card>
+  <Card title="Profile editing" icon="pen-to-square">
+    Update patient information with confirmation workflow
+  </Card>
+  <Card title="Patient selection" icon="hand-pointer">
+    Select active patients for appointments, prescriptions, and clinical records
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Comprehensive patient profiles
+
+Patient records are organized into three categories:
+
+**Basic information**
+- Full name (first name, paternal surname, maternal surname)
+- Date of birth (with automatic age calculation)
+- Gender (Masculino/Femenino)
+- Email address
+- Phone number
+- Blood type (A+, A-, B+, B-, AB+, AB-, O+, O-)
+- Allergies (comma-separated list)
+- Referring physician
+- Medical observations
+
+**Supplementary information**
+- CURP (18 characters)
+- RFC (tax ID)
+- Marital status (Soltero, Casado, Viudo, Divorciado, Unión Libre)
+- Postal code with automatic address lookup
+- Street address
+- Colony/neighborhood
+- City/population
+- Municipality
+- State
+- Emergency contact
+
+**Personal information**
+- Occupation
+- Insurance provider (from active insurers list)
+- Patient type (Particular, Aseguradora, Empresa)
+- State of birth
+- Nationality (autocomplete)
+- Religion
+- Indigenous language
+- Ethnic group
+- Disability status
+- Legal guardian/responsible party
+
+### Patient list selector
+
+The patient list displays all registered patients with:
+- Search functionality to filter by name
+- Patient name and basic details
+- Click-to-select functionality
+- Visual indication of currently selected patient
+
+## How to use
+
+### Registering a new patient
+
+<Steps>
+  <Step title="Access patient section">
+    Navigate to the "Pacientes" section from the main menu
+  </Step>
+  
+  <Step title="Click 'Nuevo' button">
+    Click the "Nuevo" button in the top-right corner to open the patient form
+  </Step>
+  
+  <Step title="Fill basic information">
+    On the "Básicos" tab, enter:
+    - Patient's full name (Nombre, Paterno, Materno)
+    - Date of birth
+    - Gender
+    - Email (optional)
+    - Phone (optional)
+    - Blood type (optional)
+    - Allergies (optional, comma-separated)
+    - Referring physician (optional)
+    - Medical observations (optional)
+  </Step>
+  
+  <Step title="Add supplementary details">
+    Switch to the "Complementarios" tab to enter:
+    - CURP (up to 18 characters)
+    - RFC
+    - Marital status
+    - Postal code (triggers automatic address lookup)
+    - Full address details
+    - Emergency contact
+  </Step>
+  
+  <Step title="Complete personal information">
+    Switch to the "Personales" tab to add:
+    - Occupation
+    - Insurance provider (select from dropdown)
+    - Patient type
+    - State of birth
+    - Nationality (use autocomplete)
+    - Religion, language, ethnicity
+    - Disability information
+    - Legal guardian if applicable
+  </Step>
+  
+  <Step title="Save the record">
+    Click "Guardar" to create the patient record. The new patient will be automatically selected
+  </Step>
+</Steps>
+
+<Note>
+  Required fields are marked with an asterisk (*). At minimum, you must enter the patient's name, paternal surname, date of birth, and gender.
+</Note>
+
+### Searching for a patient
+
+<Steps>
+  <Step title="Use the search field">
+    In the patient list, use the search bar to filter patients by name
+  </Step>
+  
+  <Step title="Click to select">
+    Click on any patient in the list to select them as the active patient
+  </Step>
+  
+  <Step title="View selection">
+    The selected patient is highlighted and becomes the active patient for all clinical operations
+  </Step>
+</Steps>
+
+### Editing patient information
+
+<Steps>
+  <Step title="Select the patient">
+    Click on the patient you want to edit from the patient list
+  </Step>
+  
+  <Step title="Click 'Editar' button">
+    With a patient selected, click the "Editar" button that appears next to "Nuevo"
+  </Step>
+  
+  <Step title="Modify information">
+    Navigate through the three tabs (Básicos, Complementarios, Personales) and update any fields as needed
+  </Step>
+  
+  <Step title="Confirm changes">
+    Click "Guardar" and confirm the modification in the dialog that appears
+  </Step>
+</Steps>
+
+<Tip>
+  When you enter a postal code in the Complementarios tab, the system automatically looks up and fills in the colony, municipality, and state information.
+</Tip>
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Keep contact information current">
+    Always update phone numbers and email addresses when patients inform you of changes. This ensures you can reach them for appointment reminders and follow-ups.
+  </Accordion>
+  
+  <Accordion title="Document allergies thoroughly">
+    Enter all known allergies in the Allergies field, separated by commas. This critical information appears prominently when prescribing medications.
+  </Accordion>
+  
+  <Accordion title="Use CURP for unique identification">
+    When available, enter the patient's CURP to ensure unique identification, especially for patients with similar names.
+  </Accordion>
+  
+  <Accordion title="Verify patient selection">
+    Before creating appointments or prescriptions, verify that the correct patient is selected by checking the highlighted name in the patient list.
+  </Accordion>
+</AccordionGroup>
+
+## Patient selection context
+
+Once a patient is selected from the list, they become the "active patient" throughout the system. This selection:
+
+- Persists across different sections of the application
+- Is required before creating appointments, prescriptions, or clinical records
+- Is displayed prominently in the header or context area
+- Can be changed at any time by returning to the Pacientes section and selecting a different patient
+
+<Note>
+  If you attempt to access Clinical Evolution, Prescriptions, or Calendar without selecting a patient first, the system will prompt you to select a patient from the Pacientes section.
+</Note>

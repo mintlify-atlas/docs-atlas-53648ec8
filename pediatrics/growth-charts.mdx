@@ -1,0 +1,292 @@
+---
+title: Growth charts
+description: Visualize pediatric patient growth data using WHO standard growth curves with percentile tracking for weight, height, BMI, and head circumference.
+---
+
+DoctorSoft+ provides comprehensive growth chart visualization based on World Health Organization (WHO) child growth standards. Charts automatically plot patient measurements against age and gender-specific percentile curves for clinical assessment.
+
+## Overview
+
+Growth charts display patient measurements over time compared to WHO reference populations. The system supports four chart types, each showing standard deviation (SD) curves and patient data points.
+
+### Available growth charts
+
+<CardGroup cols={2}>
+  <Card title="Weight-for-age" icon="scale">
+    Tracks weight gain from birth to 60 months
+  </Card>
+  <Card title="Height-for-age" icon="ruler">
+    Monitors linear growth and stature development
+  </Card>
+  <Card title="BMI-for-age" icon="trending-up">
+    Assesses body mass index changes over time
+  </Card>
+  <Card title="Head circumference-for-age" icon="baby">
+    Evaluates head growth from birth to 36 months
+  </Card>
+</CardGroup>
+
+## Accessing growth charts
+
+Growth charts are integrated into the somatometry view:
+
+<Steps>
+  <Step title="Select a patient">
+    Choose the pediatric patient whose growth you want to review. The patient must have at least one somatometry record.
+  </Step>
+  
+  <Step title="Navigate to chart tabs">
+    Click on the desired chart tab:
+    - **Peso/Edad**: Weight-for-age
+    - **Talla/Edad**: Height-for-age
+    - **IMC/Edad**: BMI-for-age
+    - **P. Cefálico/Edad**: Head circumference-for-age
+  </Step>
+  
+  <Step title="Review the visualization">
+    The chart displays WHO percentile curves with the patient's measurements plotted as data points connected by lines.
+  </Step>
+</Steps>
+
+<Info>
+  Charts automatically load gender-specific WHO data from the database (tables: `tcSomatometriasPesoEdad`, `tcSomatometriasAlturaEdad`, `tcSomatometriasBmiEdad`, `tcSomatometriasCircuHeadAge`).
+</Info>
+
+## Understanding WHO percentile curves
+
+Each growth chart displays five standard deviation curves representing population percentiles:
+
+### Curve interpretation
+
+| Curve | Label | Color | Interpretation |
+|-------|-------|-------|----------------|
+| +3 SD | P97 | Black (bold) | 97th percentile - upper limit |
+| +2 SD | P85 | Red | 85th percentile - overweight threshold |
+| Median | P50 | Green | 50th percentile - population average |
+| -2 SD | P15 | Red | 15th percentile - underweight threshold |
+| -3 SD | P3 | Black (bold) | 3rd percentile - lower limit |
+
+<Note>
+  WHO uses standard deviations (SD) rather than traditional percentiles. The curves represent statistical boundaries for normal growth variation.
+</Note>
+
+## Weight-for-age chart
+
+Tracks body weight from birth to 5 years (0-60 months).
+
+### Chart specifications
+
+- **X-axis**: Age in months (0-60)
+- **Y-axis**: Weight in kilograms (2-28 kg)
+- **Gender-specific**: Separate curves for boys (blue background) and girls (pink background)
+- **Data source**: `tcSomatometriasPesoEdad` table
+
+### Clinical interpretation
+
+- **Below P3**: Severe underweight - requires immediate assessment
+- **P3-P15**: Underweight - monitor closely and consider intervention
+- **P15-P85**: Normal weight range
+- **P85-P97**: Overweight - nutritional counseling recommended
+- **Above P97**: Severe overweight - comprehensive assessment needed
+
+## Height-for-age chart
+
+Monitors linear growth and stature development.
+
+### Chart specifications
+
+- **X-axis**: Age in months (0-60)
+- **Y-axis**: Height/length in centimeters
+- **Gender-specific**: Boys and girls have different growth patterns
+- **Data source**: `tcSomatometriasAlturaEdad` table
+
+### Clinical interpretation
+
+- **Below P3**: Short stature - evaluate for growth disorders
+- **P3-P15**: Below average height - monitor trend
+- **P15-P85**: Normal height range
+- **P85-P97**: Above average height
+- **Above P97**: Tall stature - typically normal variant
+
+<Info>
+  For children under 24 months, length is typically measured lying down (recumbent length). For children 24 months and older, standing height is measured.
+</Info>
+
+## BMI-for-age chart
+
+Assesses body mass index changes from 0-60 months.
+
+### Chart specifications
+
+- **X-axis**: Age in months (0-60)
+- **Y-axis**: BMI in kg/m² (12-22)
+- **Gender-specific**: Different patterns for boys and girls
+- **Data source**: `tcSomatometriasBmiEdad` table
+
+### Clinical interpretation
+
+| BMI Position | Classification | Action Required |
+|--------------|----------------|----------------|
+| Below P15 | Underweight | Nutritional assessment |
+| P15-P85 | Healthy weight | Maintain current habits |
+| P85-P97 | Overweight | Dietary counseling |
+| Above P97 | Obesity | Comprehensive intervention |
+
+<Warning>
+  BMI-for-age is the preferred indicator for identifying overweight and obesity in children. It should be used in conjunction with clinical assessment.
+</Warning>
+
+## Head circumference-for-age chart
+
+Evaluates brain growth and development from birth to 36 months.
+
+### Chart specifications
+
+- **X-axis**: Age in months (0-36)
+- **Y-axis**: Head circumference in centimeters
+- **Gender-specific**: Boys typically have larger head circumference
+- **Data source**: `tcSomatometriasCircuHeadAge` table
+
+### Clinical interpretation
+
+- **Below P3**: Microcephaly - neurological evaluation indicated
+- **P3-P15**: Small head - monitor for crossing percentiles
+- **P15-P85**: Normal head circumference
+- **P85-P97**: Large head - typically familial
+- **Above P97**: Macrocephaly - assess for hydrocephalus
+
+<Note>
+  Head circumference measurement is most critical during the first 24 months when brain growth is most rapid.
+</Note>
+
+## Chart features
+
+### Interactive elements
+
+- **Hover tooltips**: Display exact values and age when hovering over data points
+- **Age formatting**: Shows age as "Years + Months" (e.g., "2a 6m")
+- **Grid lines**: Major gridlines every 6 months (X-axis) and at key intervals (Y-axis)
+- **Legend**: Positioned at top-right for easy reference
+
+### Visual customization
+
+- Patient data points are displayed in the primary theme color
+- Points are larger (9px radius) for easy visibility
+- Lines connect sequential measurements showing growth trajectory
+- Charts use 70% viewport height for optimal viewing
+
+### Data presentation
+
+Below each chart:
+
+- **WHO standards reference**: Confirms data source
+- **Data point count**: Shows number of WHO reference points loaded
+- **Status indicator**: Displays loading/error/success state
+
+## Growth analysis
+
+### Identifying growth patterns
+
+<Steps>
+  <Step title="Check position">
+    Note which percentile curve the patient follows. Most healthy children track consistently along one percentile.
+  </Step>
+  
+  <Step title="Assess trajectory">
+    Look for the pattern over time. Consistent tracking along a percentile is normal.
+  </Step>
+  
+  <Step title="Watch for crossing">
+    Crossing two or more major percentile lines (upward or downward) may indicate a growth issue requiring evaluation.
+  </Step>
+  
+  <Step title="Consider context">
+    Evaluate growth in context of family history, ethnicity, and clinical condition.
+  </Step>
+</Steps>
+
+### Red flags requiring evaluation
+
+- Falling across two or more percentile curves
+- Rising rapidly across percentiles (weight-for-age or BMI)
+- Head circumference crossing percentiles
+- Any measurement below P3 or above P97
+- Discordance between weight and height percentiles
+
+## Technical implementation
+
+### Data loading
+
+The system loads WHO data on patient selection:
+
+1. Determines patient gender (M/F) from patient record
+2. Queries gender-specific WHO tables via `somatometryService.getWHOChartData()`
+3. Retrieves complete percentile datasets (ages 0-60 months)
+4. Caches data to prevent repeated database queries
+
+### Fallback mechanism
+
+If the database lacks WHO data, the system uses hardcoded reference values to ensure charts remain functional.
+
+<Info>
+  Charts are rendered using Chart.js library with responsive design for various screen sizes.
+</Info>
+
+## Patient data plotting
+
+The system plots patient measurements by:
+
+1. Extracting all somatometry records for the selected patient
+2. Calculating age in months for each measurement date
+3. Sorting records chronologically
+4. Plotting points on the appropriate chart
+5. Connecting points with lines to show growth trajectory
+
+## Chart display rules
+
+- Charts only display when at least one somatometry record exists
+- Empty state message appears if no data is available
+- Loading spinner shows while WHO data is being fetched
+- Error messages display if database queries fail
+
+## Printing and sharing
+
+Growth charts can be:
+
+- Printed directly from the browser
+- Included in medical records
+- Shared with specialists for consultation
+- Used for parent education
+
+<Note>
+  Always review growth charts in the context of the complete clinical picture, including family history, nutrition, and overall health.
+</Note>
+
+## Best practices
+
+<Steps>
+  <Step title="Regular monitoring">
+    Review growth charts at every well-child visit to detect trends early.
+  </Step>
+  
+  <Step title="Multiple measurements">
+    Use at least 3-4 data points over time to establish a reliable growth pattern.
+  </Step>
+  
+  <Step title="Compare all charts">
+    Review weight, height, BMI, and head circumference together for comprehensive assessment.
+  </Step>
+  
+  <Step title="Document concerns">
+    Note any deviations from expected growth in patient notes for follow-up.
+  </Step>
+  
+  <Step title="Parent involvement">
+    Share charts with parents to promote understanding of child's growth.
+  </Step>
+</Steps>
+
+## Related features
+
+- [Somatometry measurements](/pediatrics/somatometry): Record growth measurements
+- [Development tracking](/pediatrics/development-tracking): Monitor developmental milestones

@@ -1,0 +1,611 @@
+---
+title: Activity service
+description: Track and manage system activities in DoctorSoft+
+---
+
+The Activity Service provides comprehensive tracking of system activities including appointments, patient records, clinical documents, and user actions. It supports filtering, pagination, statistics, and automatic cleanup.
+
+## Methods
+
+### getRecentActivities
+
+Retrieve recent activities with pagination.
+
+```typescript
+activityService.getRecentActivities(
+  limit: number = 10,
+  offset: number = 0
+): Promise<Activity[]>
+```
+
+<ParamField path="limit" type="number" default={10}>
+  Maximum number of activities to retrieve
+</ParamField>
+
+<ParamField path="offset" type="number" default={0}>
+  Number of activities to skip (for pagination)
+</ParamField>
+
+**Returns:**
+Array of activities ordered by creation date (most recent first).
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Get first 20 activities
+const activities = await api.activities.getRecentActivities(20, 0);
+
+// Get next 20 activities
+const moreActivities = await api.activities.getRecentActivities(20, 20);
+```
+
+**Business unit filtering:**
+Automatically filters by the current user's business unit (`idbu`).
+
+---
+
+### getFilteredActivities
+
+Retrieve activities with advanced filtering.
+
+```typescript
+activityService.getFilteredActivities(
+  filters: ActivityFilters,
+  limit: number = 50,
+  offset: number = 0
+): Promise<Activity[]>
+```
+
+<ParamField path="filters" type="object" required>
+  Filter criteria
+  
+  <ParamField path="filters.tipos" type="ActivityType[]">
+    Array of activity types to include
+  </ParamField>
+  
+  <ParamField path="filters.fechaInicio" type="string">
+    Start date (ISO 8601 format)
+  </ParamField>
+  
+  <ParamField path="filters.fechaFin" type="string">
+    End date (ISO 8601 format)
+  </ParamField>
+  
+  <ParamField path="filters.idUsuario" type="string">
+    Filter by user ID
+  </ParamField>
+  
+  <ParamField path="filters.idPaciente" type="string">
+    Filter by patient ID
+  </ParamField>
+  
+  <ParamField path="filters.esCritico" type="boolean">
+    Filter critical activities only
+  </ParamField>
+  
+  <ParamField path="filters.busqueda" type="string">
+    Search term (searches description and patient name)
+  </ParamField>
+</ParamField>
+
+<ParamField path="limit" type="number" default={50}>
+  Maximum number of results
+</ParamField>
+
+<ParamField path="offset" type="number" default={0}>
+  Number of results to skip
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Get all appointment activities for a specific patient
+const filters = {
+  tipos: ['cita_nueva', 'cita_actualizada', 'cita_cancelada'],
+  idPaciente: 'abc-123-def',
+  fechaInicio: '2024-01-01',
+  fechaFin: '2024-03-31'
+};
+
+const activities = await api.activities.getFilteredActivities(filters);
+```
+
+**Search functionality:**
+The `busqueda` parameter searches across:
+- `descripcion` (activity description)
+- `descripcion_detalle` (detailed description)
+- `nombre_paciente` (patient name)
+
+---
+
+### getActivitiesByType
+
+Retrieve activities of a specific type.
+
+```typescript
+activityService.getActivitiesByType(
+  tipo: ActivityType,
+  limit: number = 20
+): Promise<Activity[]>
+```
+
+<ParamField path="tipo" type="ActivityType" required>
+  Activity type to filter
+</ParamField>
+
+<ParamField path="limit" type="number" default={20}>
+  Maximum number of results
+</ParamField>
+
+**Activity types:**
+- `'cita_nueva'` - New appointment created
+- `'cita_actualizada'` - Appointment updated
+- `'cita_cancelada'` - Appointment cancelled
+- `'cita_completada'` - Appointment completed
+- `'paciente_nuevo'` - New patient registered
+- `'paciente_actualizado'` - Patient record updated
+- `'receta'` - Prescription created
+- `'historia_clinica'` - Clinical history updated
+- `'evolucion'` - Clinical evolution added
+- `'documento'` - Document uploaded
+- `'sistema'` - System activity
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Get all new patient registrations
+const newPatients = await api.activities.getActivitiesByType('paciente_nuevo', 50);
+console.log(`${newPatients.length} new patients registered`);
+```
+
+---
+
+### getActivitiesByPatient
+
+Retrieve all activities for a specific patient.
+
+```typescript
+activityService.getActivitiesByPatient(
+  patientId: string,
+  limit: number = 20
+): Promise<Activity[]>
+```
+
+<ParamField path="patientId" type="string" required>
+  Patient UUID
+</ParamField>
+
+<ParamField path="limit" type="number" default={20}>
+  Maximum number of results
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const patientActivities = await api.activities.getActivitiesByPatient(
+  selectedPatient.id
+);
+```
+
+---
+
+### getActivitiesByDateRange
+
+Retrieve activities within a date range.
+
+```typescript
+activityService.getActivitiesByDateRange(
+  startDate: string,
+  endDate: string,
+  limit: number = 100
+): Promise<Activity[]>
+```
+
+<ParamField path="startDate" type="string" required>
+  Start date (ISO 8601 format)
+</ParamField>
+
+<ParamField path="endDate" type="string" required>
+  End date (ISO 8601 format)
+</ParamField>
+
+<ParamField path="limit" type="number" default={100}>
+  Maximum number of results
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Get all activities for March 2024
+const activities = await api.activities.getActivitiesByDateRange(
+  '2024-03-01T00:00:00Z',
+  '2024-03-31T23:59:59Z'
+);
+```
+
+---
+
+### getActivityStats
+
+Get activity statistics for a time period.
+
+```typescript
+activityService.getActivityStats(
+  period: 'day' | 'week' | 'month' = 'day'
+): Promise<ActivityStats>
+```
+
+<ParamField path="period" type="'day' | 'week' | 'month'" default="'day'">
+  Time period for statistics
+</ParamField>
+
+<ResponseField name="stats" type="object">
+  <ResponseField name="totalHoy" type="number">
+    Total activities today
+  </ResponseField>
+  
+  <ResponseField name="totalSemana" type="number">
+    Total activities this week
+  </ResponseField>
+  
+  <ResponseField name="totalMes" type="number">
+    Total activities this month
+  </ResponseField>
+  
+  <ResponseField name="porTipo" type="object">
+    Activity counts by type
+    
+    <ResponseField name="cita_nueva" type="number">
+      New appointments
+    </ResponseField>
+    
+    <ResponseField name="cita_actualizada" type="number">
+      Updated appointments
+    </ResponseField>
+    
+    <ResponseField name="cita_cancelada" type="number">
+      Cancelled appointments
+    </ResponseField>
+    
+    <ResponseField name="paciente_nuevo" type="number">
+      New patients
+    </ResponseField>
+    
+    <ResponseField name="receta" type="number">
+      Prescriptions
+    </ResponseField>
+    
+    <ResponseField name="documento" type="number">
+      Documents uploaded
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="usuarioMasActivo" type="object">
+    Most active user
+    
+    <ResponseField name="id" type="string">
+      User ID
+    </ResponseField>
+    
+    <ResponseField name="nombre" type="string">
+      User name
+    </ResponseField>
+    
+    <ResponseField name="cantidad" type="number">
+      Activity count
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Get daily statistics
+const dailyStats = await api.activities.getActivityStats('day');
+console.log(`Today: ${dailyStats.totalHoy} activities`);
+console.log(`Most active: ${dailyStats.usuarioMasActivo?.nombre}`);
+
+// Get monthly statistics
+const monthlyStats = await api.activities.getActivityStats('month');
+console.log(`This month: ${monthlyStats.totalMes} activities`);
+console.log(`New patients: ${monthlyStats.porTipo.paciente_nuevo}`);
+```
+
+---
+
+### createManualActivity
+
+Manually create an activity record.
+
+```typescript
+activityService.createManualActivity(
+  payload: CreateActivityPayload
+): Promise<Activity>
+```
+
+<ParamField path="payload" type="object" required>
+  Activity data
+  
+  <ParamField path="payload.tipo_actividad" type="ActivityType" required>
+    Activity type
+  </ParamField>
+  
+  <ParamField path="payload.descripcion" type="string" required>
+    Short description
+  </ParamField>
+  
+  <ParamField path="payload.descripcion_detalle" type="string">
+    Detailed description
+  </ParamField>
+  
+  <ParamField path="payload.id_paciente" type="string">
+    Related patient ID
+  </ParamField>
+  
+  <ParamField path="payload.nombre_paciente" type="string">
+    Patient name (for display)
+  </ParamField>
+  
+  <ParamField path="payload.metadatos" type="object">
+    Additional metadata (JSON)
+  </ParamField>
+  
+  <ParamField path="payload.es_critico" type="boolean" default={false}>
+    Whether activity is critical
+  </ParamField>
+  
+  <ParamField path="payload.icono" type="string" default="'Activity'">
+    Icon name
+  </ParamField>
+  
+  <ParamField path="payload.color" type="string" default="'#3B82F6'">
+    Color hex code
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const activity = await api.activities.createManualActivity({
+  tipo_actividad: 'sistema',
+  descripcion: 'Database backup completed',
+  descripcion_detalle: 'Automatic daily backup finished successfully',
+  es_critico: false,
+  icono: 'Database',
+  color: '#10B981',
+  metadatos: {
+    backup_size: '2.4 GB',
+    duration: '3m 24s'
+  }
+});
+```
+
+**Auto-populated fields:**
+- `id_usuario` - Set from current session
+- `idbu` - Set from current business unit
+
+---
+
+### countActivities
+
+Count total activities with optional filters.
+
+```typescript
+activityService.countActivities(
+  filters?: ActivityFilters
+): Promise<number>
+```
+
+<ParamField path="filters" type="ActivityFilters">
+  Optional filter criteria (same as getFilteredActivities)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Count all activities
+const total = await api.activities.countActivities();
+
+// Count critical activities
+const critical = await api.activities.countActivities({ esCritico: true });
+
+// Count activities for a patient
+const patientCount = await api.activities.countActivities({
+  idPaciente: 'abc-123-def'
+});
+```
+
+---
+
+### cleanOldActivities
+
+Clean up old activities based on retention settings.
+
+```typescript
+activityService.cleanOldActivities(): Promise<Array<{
+  idbu: string;
+  deleted: number;
+}>>
+```
+
+**Returns:**
+Array of objects showing how many records were deleted per business unit.
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+const results = await api.activities.cleanOldActivities();
+results.forEach(result => {
+  console.log(`BU ${result.idbu}: Deleted ${result.deleted} old activities`);
+});
+```
+
+**Note:**
+This calls the `fn_limpiar_actividades_antiguas` RPC function, which respects the `dias_retencion_actividad` setting for each business unit.
+
+---
+
+## Configuration methods
+
+### getActivityConfig
+
+Get activity configuration for the current business unit.
+
+```typescript
+activityService.getActivityConfig(): Promise<{
+  diasRetencion: number;
+  notificacionesRealtime: boolean;
+  exportarActividades: boolean;
+}>
+```
+
+**Example:**
+
+```typescript
+const config = await api.activities.getActivityConfig();
+console.log(`Retention: ${config.diasRetencion} days`);
+console.log(`Realtime: ${config.notificacionesRealtime}`);
+```
+
+---
+
+### updateActivityConfig
+
+Update activity configuration settings.
+
+```typescript
+activityService.updateActivityConfig(config: {
+  diasRetencion?: number;
+  notificacionesRealtime?: boolean;
+  exportarActividades?: boolean;
+}): Promise<void>
+```
+
+<ParamField path="config" type="object" required>
+  Configuration to update
+  
+  <ParamField path="config.diasRetencion" type="number">
+    Days to retain activities before cleanup
+  </ParamField>
+  
+  <ParamField path="config.notificacionesRealtime" type="boolean">
+    Enable real-time activity notifications
+  </ParamField>
+  
+  <ParamField path="config.exportarActividades" type="boolean">
+    Allow activity export
+  </ParamField>
+</ParamField>
+
+**Example:**
+
+```typescript
+import { api } from '../lib/api';
+
+// Update retention period to 90 days
+await api.activities.updateActivityConfig({
+  diasRetencion: 90
+});
+
+// Enable realtime notifications
+await api.activities.updateActivityConfig({
+  notificacionesRealtime: true
+});
+```
+
+---
+
+## Type definitions
+
+```typescript
+type ActivityType =
+  | 'cita_nueva'
+  | 'cita_actualizada'
+  | 'cita_cancelada'
+  | 'cita_completada'
+  | 'paciente_nuevo'
+  | 'paciente_actualizado'
+  | 'receta'
+  | 'historia_clinica'
+  | 'evolucion'
+  | 'documento'
+  | 'sistema';
+
+interface Activity {
+  id: string;
+  created_at: string;
+  tipo_actividad: ActivityType;
+  descripcion: string;
+  descripcion_detalle?: string;
+  id_usuario?: string;
+  nombre_usuario?: string;
+  id_paciente?: string;
+  nombre_paciente?: string;
+  idbu: string;
+  metadatos?: Record<string, any>;
+  es_critico: boolean;
+  icono: string;
+  color: string;
+}
+
+interface ActivityFilters {
+  tipos?: ActivityType[];
+  fechaInicio?: string;
+  fechaFin?: string;
+  idUsuario?: string;
+  idPaciente?: string;
+  esCritico?: boolean;
+  busqueda?: string;
+}
+
+interface ActivityStats {
+  totalHoy: number;
+  totalSemana: number;
+  totalMes: number;
+  porTipo: Record<ActivityType, number>;
+  usuarioMasActivo?: {
+    id: string;
+    nombre: string;
+    cantidad: number;
+  };
+}
+
+interface CreateActivityPayload {
+  tipo_actividad: ActivityType;
+  descripcion: string;
+  descripcion_detalle?: string;
+  id_paciente?: string;
+  nombre_paciente?: string;
+  metadatos?: Record<string, any>;
+  es_critico?: boolean;
+  icono?: string;
+  color?: string;
+}
+```
+
+## Source location
+
+`~/workspace/source/src/services/activityService.ts`
+
+## Related services
+
+- [Patient service](/api/patient-service) - Patient activities are automatically tracked
+- [Appointment service](/api/appointment-service) - Appointment changes create activities

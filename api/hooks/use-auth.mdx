@@ -1,0 +1,171 @@
+---
+title: useAuth
+description: Custom hook to access authentication context and user session management
+---
+
+The `useAuth` hook provides access to the authentication context, including the current user, session state, and sign-out functionality.
+
+## Import
+
+```typescript
+import { useAuth } from '../hooks/useAuth';
+```
+
+## Usage
+
+<CodeGroup>
+```tsx Dashboard component
+import { useAuth } from '../hooks/useAuth';
+
+export function Dashboard() {
+  const { user, loading, signOut } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {user?.nombre}</h1>
+      <p>Role: {user?.userRole}</p>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+```tsx Protected route
+import { useAuth } from '../hooks/useAuth';
+
+export function RoleBasedRoute({ requiredRole, children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user || user.userRole !== requiredRole) {
+    return <Navigate to="/unauthorized" />;
+  }
+
+  return <>{children}</>;
+}
+```
+</CodeGroup>
+
+## Return value
+
+The hook returns an object with the following properties:
+
+<ResponseField name="user" type="UserWithAttributes | null">
+  The currently authenticated user object, or `null` if not authenticated.
+
+  <Expandable title="UserWithAttributes properties">
+    <ResponseField name="id" type="string">
+      Unique user identifier from Supabase Auth
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      User's email address
+    </ResponseField>
+    
+    <ResponseField name="userRole" type="string | null">
+      User's role in the system (e.g., "Medico", "Admin")
+    </ResponseField>
+    
+    <ResponseField name="idbu" type="string | null">
+      Business unit identifier the user belongs to
+    </ResponseField>
+    
+    <ResponseField name="nombre" type="string | null">
+      User's full name
+    </ResponseField>
+    
+    <ResponseField name="estado" type="string | null">
+      User's account status (e.g., "Activo", "Inactivo")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  Indicates whether the authentication state is being loaded. Set to `true` during initial session check or sign-in process.
+</ResponseField>
+
+<ResponseField name="signOut" type="() => Promise<{ error: AuthError | null }>">
+  Async function to sign out the current user. Returns an object with an `error` property if the sign-out fails.
+</ResponseField>
+
+<ResponseField name="error" type="AuthError | null">
+  Contains any authentication error that occurred, or `null` if no error.
+</ResponseField>
+
+<ResponseField name="clearError" type="() => void">
+  Function to clear the current error state.
+</ResponseField>
+
+## Error handling
+
+The hook will throw an error if used outside of an `AuthProvider`:
+
+```typescript
+if (context === undefined) {
+  throw new Error('useAuth must be used within an AuthProvider');
+}
+```
+
+Make sure your component tree is wrapped with `AuthProvider`:
+
+```tsx App.tsx
+import { AuthProvider } from './contexts/AuthContext';
+
+function App() {
+  return (
+    <AuthProvider>
+      {/* Your app components */}
+    </AuthProvider>
+  );
+}
+```
+
+## Implementation details
+
+The hook internally uses React's `useContext` to access the `AuthContext`. The context is managed by `AuthProvider`, which:
+
+- Monitors Supabase authentication state changes
+- Fetches extended user information from the `tcUsuarios` table
+- Caches user data to minimize database queries
+- Handles token refresh without blocking the UI
+- Automatically clears cache on sign-out
+
+### Token refresh behavior
+
+When a token refresh occurs (`TOKEN_REFRESHED` event), the hook updates the session without blocking the UI or re-querying the database. This ensures a smooth user experience without unnecessary loading states.
+
+### Initial session loading
+
+On initial page load (`INITIAL_SESSION` event), the hook loads the user with default values first, then fetches real data in the background to prevent blocking the UI.
+
+## Type definitions
+
+```typescript ~/workspace/source/src/contexts/AuthContext.tsx
+interface AuthContextType {
+  user: UserWithAttributes | null;
+  loading: boolean;
+  signOut: () => Promise<{ error: AuthError | null }>;
+  error: AuthError | null;
+  clearError: () => void;
+}
+
+type UserWithAttributes = Omit<User, 'deleted_at'> & {
+  userRole?: string | null;
+  idbu?: string | null;
+  nombre?: string | null;
+  estado?: string | null;
+  deleted_at?: string | null;
+};
+```
+
+## Related
+
+- [AuthContext](/api/contexts/auth-context) - The underlying context provider
+- [Supabase Auth](https://supabase.com/docs/guides/auth) - Authentication service documentation

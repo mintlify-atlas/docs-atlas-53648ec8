@@ -1,0 +1,340 @@
+---
+title: Gyneco-obstetric history
+description: Document reproductive health history for female patients with automatic FPP calculation
+---
+
+The **Gyneco-Obstetric History** (Antecedentes Gineco-Obstétricos) module provides comprehensive documentation of reproductive health for female patients. It includes automatic calculations, validation, and specialized fields for pregnancy, menstrual history, and preventive screenings.
+
+## Overview
+
+This module is exclusively for **female patients** and includes:
+- Current pregnancy status tracking
+- Obstetric history (GPAC notation)
+- Menstrual and reproductive history
+- Preventive health screenings (Pap smear, mammography)
+- Automatic gestational age calculations
+
+<Warning>
+This module is only accessible for patients with sex registered as "Femenino". Male or non-specified patients will see a modal explaining that this section does not apply.
+</Warning>
+
+## Current pregnancy section
+
+A simple checkbox indicates if the patient is currently pregnant:
+
+```
+☑ Paciente actualmente embarazada
+```
+
+When checked:
+- The FPP (Fecha Probable de Parto) field becomes active and auto-calculated
+- The FUM field is highlighted as required
+- Additional pregnancy-related validations activate
+
+## Obstetric history (GPAC)
+
+The module uses standard **GPAC notation**:
+
+- **G** = Gestas (Total pregnancies)
+- **P** = Paras (Live births)
+- **A** = Abortos (Abortions/miscarriages)
+- **C** = Cesáreas (Cesarean sections)
+
+### Automatic calculation
+
+<Info>
+Gestas are automatically calculated as: **Paras + Abortos + Cesáreas**
+</Info>
+
+You only need to enter:
+- **Paras**: Number of deliveries (vaginal or cesarean) resulting in live birth
+- **Abortos**: Pregnancies ending before 20 weeks
+- **Cesáreas**: Number of cesarean deliveries
+
+The system automatically:
+1. Sums the three values
+2. Updates the Gestas field
+3. Displays the complete GPAC notation as a badge (e.g., "G3P2A0C1")
+
+### Field definitions with tooltips
+
+Each GPAC field includes an info icon (ⓘ) with detailed explanation:
+
+**Gestas**:
+- Calculated automatically
+- Represents total number of pregnancies
+- Read-only field with gray background
+
+**Paras**:
+- Deliveries after 20 weeks gestation
+- Includes term (≥37 weeks) and preterm (20-37 weeks)
+- Must result in live birth
+
+**Abortos**:
+- Pregnancies ending before 20 weeks
+- Includes spontaneous and induced
+- Total count regardless of cause
+
+**Cesáreas**:
+- Deliveries performed surgically
+- Count of cesarean sections
+- Included in Paras count
+
+## Menstrual history
+
+### FUM (Fecha Última Menstruación)
+
+**Date field**: First day of last menstrual period
+
+<Note>
+When the patient is pregnant and FUM is entered, the FPP (due date) is automatically calculated using Naegele's Rule.
+</Note>
+
+If pregnant and FUM not entered:
+- Field highlights with primary color border
+- Pulsing animation draws attention
+- Red asterisk (*) indicates required
+- Placeholder message: "Capture primero la FUM para calcular la FPP"
+
+### FPP (Fecha Probable de Parto)
+
+**Auto-calculated field** using Naegele's Rule:
+
+```
+FPP = FUM + 7 days - 3 months + 1 year
+```
+
+Or equivalently: FUM + 280 days (40 weeks)
+
+**Conditions for calculation**:
+- Patient must be marked as currently pregnant
+- FUM must be entered
+- Calculation updates in real-time
+
+**Field behavior**:
+- Read-only (cannot be manually edited)
+- Gray background indicates auto-calculated
+- Format: YYYY-MM-DD
+- Clears automatically if pregnancy checkbox unchecked
+
+### Other menstrual fields
+
+**Menarquía** (Age at first menstruation):
+- Numeric field (years)
+- Typical range: 9-16 years
+
+**IVSA** (Inicio de Vida Sexual Activa):
+- Age when sexual activity began
+- Numeric field with 0-100 validation
+
+**Ritmo Menstrual**:
+- Describes cycle pattern
+- Format: "28x5" (28-day cycle, 5 days bleeding)
+- Free text field
+
+**Método Anticonceptivo**:
+- Current contraceptive method
+- Examples: "DIU", "Píldoras", "Ninguno"
+- Free text field
+
+**Fecha Menopausia**:
+- Date of menopause onset
+- Date picker field
+- Leave blank if not applicable
+
+## Preventive health screenings
+
+### Papanicolaou (Pap smear)
+
+**Fecha Último Papanicolau**:
+- Date of last cervical cytology
+- Used to track screening compliance
+
+**Resultado Último Papanicolau**:
+- Result classification
+- Common values:
+  - "Normal"
+  - "ASCUS" (Atypical Squamous Cells of Undetermined Significance)
+  - "NIC I/II/III" (Cervical Intraepithelial Neoplasia grades)
+  - "Carcinoma"
+
+### Mammography
+
+**Fecha Última Mamografía**:
+- Date of last mammogram
+- Important for breast cancer screening
+
+**Resultado Última Mamografía**:
+- Result using BIRADS classification
+- Common values:
+  - "BIRADS 1" (Normal)
+  - "BIRADS 2" (Benign findings)
+  - "BIRADS 3" (Probably benign)
+  - "BIRADS 4" (Suspicious)
+  - "BIRADS 5" (Highly suspicious)
+  - "BIRADS 6" (Known cancer)
+
+## Additional notes
+
+Free-text area for:
+- Sexually transmitted infections
+- Gynecological surgeries (hysterectomy, oophorectomy)
+- Fertility issues or treatments
+- Menopause symptoms
+- Any other relevant reproductive health information
+
+## Real-time summary
+
+A dynamic summary section displays colored badges:
+
+**Pregnancy status** (yellow badge):
+- "Embarazada actualmente" if checked
+
+**GPAC values** (color-coded):
+- Gestas (primary color)
+- Paras (green)
+- Abortos (red)
+- Cesáreas (yellow)
+
+**Key dates**:
+- FUM (primary color)
+- FPP (yellow, if pregnant)
+- Menarquia age (primary color)
+- IVSA age (primary color)
+
+**Screenings**:
+- Papanicolaou date and result (blue)
+- Mamografía date and result (green)
+
+<Info>
+The summary updates instantly as you enter data, providing at-a-glance verification of entered information.
+</Info>
+
+## Data validation
+
+The form uses Zod schema validation:
+
+```typescript
+const gynecoObstetricSchema = z.object({
+  embarazo_actual: z.boolean().nullable().optional(),
+  gestas: z.number().int().min(0).nullable().optional(),
+  paras: z.number().int().min(0).nullable().optional(),
+  abortos: z.number().int().min(0).nullable().optional(),
+  cesareas: z.number().int().min(0).nullable().optional(),
+  fum: z.string().nullable().optional(),
+  menarquia: z.number().int().min(0).nullable().optional(),
+  ivsa: z.number().int().min(0).max(100).nullable().optional(),
+  // ... other fields
+});
+```
+
+**Key validations**:
+- GPAC values must be non-negative integers
+- IVSA limited to 0-100 years
+- Empty strings converted to null for date fields
+- All fields optional (can be null)
+
+## Saving and updating
+
+Click **Guardar** to save changes.
+
+**Save logic**:
+- **New record**: Creates if no gyneco-obstetric history exists for patient
+- **Update**: Modifies existing record based on `patient_id`
+- **Auto-fields**: `user_id`, `idbu`, and `updated_at` automatically injected
+
+<Steps>
+  <Step title="Enter data">
+    Fill in relevant fields across all sections.
+  </Step>
+  
+  <Step title="Verify calculations">
+    Check that Gestas and FPP (if applicable) are correctly calculated.
+  </Step>
+  
+  <Step title="Save">
+    Click the Guardar button at the bottom of the form.
+  </Step>
+  
+  <Step title="Confirm">
+    Form reloads with saved data. No explicit success message, but data persists.
+  </Step>
+</Steps>
+
+## Print report
+
+Click **"Imprimir Informe"** to generate a formatted gyneco-obstetric report including:
+- Patient identification
+- Current pregnancy status and FPP
+- Complete GPAC notation
+- Menstrual history details
+- Screening dates and results
+- Additional notes
+
+## Clinical guidelines
+
+### Recommended screenings by age
+
+**Pap smear**:
+- Start: Age 21
+- Frequency: Every 3 years (ages 21-29)
+- Every 5 years with HPV co-testing (ages 30-65)
+- Stop: Age 65 (if adequate prior screening)
+
+**Mammography**:
+- Start: Age 40-50 (based on risk factors)
+- Frequency: Annually or biennially
+- Continue based on life expectancy
+
+### High-risk indicators
+
+<Warning>
+Consider high-risk management for:
+- History of multiple miscarriages (≥3)
+- Previous preterm deliveries
+- Multiple cesarean sections
+- Abnormal Pap or mammography results
+- Family history of reproductive cancers
+</Warning>
+
+## Pregnancy calculations
+
+### Gestational age from FUM
+
+Based on FUM, calculate:
+- **Weeks pregnant**: (Today - FUM) / 7
+- **Trimester**: 
+  - 1st: 0-13 weeks
+  - 2nd: 14-27 weeks
+  - 3rd: 28-40 weeks
+
+### Expected delivery date
+
+Naegele's Rule provides FPP:
+- Assumes 28-day cycle
+- May need adjustment for irregular cycles
+- Ultrasound dating more accurate (especially in first trimester)
+
+## Source code reference
+
+Implemented in:
+- `/workspace/source/src/pages/GynecoObstetricHistory.tsx` (1042 lines)
+- `/workspace/source/src/services/gynecoObstetricService.ts` - Service layer
+
+Key features:
+- Auto-calculation with useEffect hooks
+- Real-time FPP calculation from FUM
+- Auto-sum of Gestas from P+A+C
+- Conditional rendering based on pregnancy status
+- Sex-based access control (female only)
+
+API endpoints:
+- `api.gynecoObstetricHistory.getByPatientId(patientId)`
+- `api.gynecoObstetricHistory.create(payload)`
+- `api.gynecoObstetricHistory.update(patientId, payload)`
+
+Date handling:
+- Uses `date-fns` for parsing and formatting
+- Stores dates as ISO strings in database
+- Displays in DD/MM/YYYY format in UI
+- Form uses YYYY-MM-DD for date inputs

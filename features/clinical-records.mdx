@@ -1,0 +1,272 @@
+---
+title: Clinical records
+description: Document patient clinical evolution with rich text entries and chronological tracking
+---
+
+Clinical records (Evolución Clínica) allow physicians to document patient progress, treatment responses, and clinical observations over time. Each entry is timestamped and stored chronologically to provide a complete medical history.
+
+## Overview
+
+The clinical evolution module provides:
+
+<CardGroup cols={2}>
+  <Card title="Rich text documentation" icon="file-medical">
+    Create formatted clinical notes with the rich text editor
+  </Card>
+  <Card title="Chronological history" icon="timeline">
+    View all clinical entries in reverse chronological order
+  </Card>
+  <Card title="Patient-specific records" icon="user-doctor">
+    Each record is tied to the selected patient
+  </Card>
+  <Card title="Timestamp tracking" icon="clock">
+    Every entry is automatically timestamped with creation date and time
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Rich text editor
+
+The clinical evolution editor supports:
+
+- **Text formatting**: Bold, italic, underline
+- **Lists**: Bulleted and numbered lists
+- **Headings**: Multiple heading levels for organization
+- **Paragraphs**: Proper paragraph spacing and formatting
+- **Undo/redo**: Full editing history
+
+This allows physicians to create well-structured, readable clinical notes that go beyond plain text.
+
+### Entry display
+
+Each clinical evolution entry shows:
+
+- **Timestamp**: Date and time of creation (format: DD/MM/YYYY HH:mm)
+- **Entry content**: Rendered rich text with proper formatting
+- **Visual separation**: Each entry appears in its own card with clear borders
+
+### History view
+
+All entries are displayed in reverse chronological order (newest first), allowing physicians to:
+
+- Quickly review recent patient progress
+- Track treatment responses over time
+- Reference past clinical decisions
+- Build a comprehensive patient narrative
+
+## How to use
+
+### Creating a clinical evolution entry
+
+<Steps>
+  <Step title="Select a patient">
+    Navigate to "Pacientes" and select the patient for whom you want to create a clinical note. A patient must be selected before accessing clinical evolution.
+  </Step>
+  
+  <Step title="Access clinical evolution">
+    Click on "Evolución Clínica" in the main menu
+  </Step>
+  
+  <Step title="Write the clinical note">
+    In the rich text editor at the top of the page:
+    - Type your clinical observations
+    - Use the formatting toolbar to structure the note
+    - Add headings, lists, or emphasis as needed
+  </Step>
+  
+  <Step title="Save the entry">
+    Click "Agregar Entrada" to save the clinical note. The entry will be added to the history with the current timestamp.
+  </Step>
+</Steps>
+
+<Tip>
+  Use headings and lists to organize complex clinical notes. For example:
+  
+  **Subjective:**
+  - Patient reports decreased pain
+  - Sleep quality improved
+  
+  **Objective:**
+  - Blood pressure: 120/80
+  - No signs of inflammation
+  
+  **Assessment:**
+  Treatment is effective
+  
+  **Plan:**
+  - Continue current medication
+  - Follow-up in 2 weeks
+</Tip>
+
+### Viewing clinical history
+
+<Steps>
+  <Step title="Select the patient">
+    Ensure the correct patient is selected from the Pacientes section
+  </Step>
+  
+  <Step title="Open clinical evolution">
+    Navigate to "Evolución Clínica"
+  </Step>
+  
+  <Step title="Review entries">
+    Scroll through the "Previa" (Previous) section to review all past clinical entries in chronological order
+  </Step>
+</Steps>
+
+The header shows the total number of records for the selected patient (e.g., "15 registros").
+
+### Switching between patients
+
+<Steps>
+  <Step title="Return to patient list">
+    If you need to view clinical records for a different patient, navigate back to "Pacientes"
+  </Step>
+  
+  <Step title="Select new patient">
+    Click on the patient whose records you want to view
+  </Step>
+  
+  <Step title="Return to clinical evolution">
+    Navigate back to "Evolución Clínica" to see that patient's clinical history
+  </Step>
+</Steps>
+
+<Note>
+  If you attempt to access the clinical evolution page without a patient selected, the system will display a modal prompting you to select a patient first.
+</Note>
+
+## Documentation best practices
+
+<AccordionGroup>
+  <Accordion title="Document regularly">
+    Create clinical evolution entries after each patient visit or significant event. Regular documentation ensures continuity of care and helps track treatment effectiveness.
+  </Accordion>
+  
+  <Accordion title="Be specific and objective">
+    Record concrete observations, measurements, and patient-reported symptoms. Include relevant vital signs, test results, and physical findings.
+  </Accordion>
+  
+  <Accordion title="Use structured formats">
+    Consider using formats like SOAP (Subjective, Objective, Assessment, Plan) to ensure comprehensive documentation. The rich text editor's heading and list features make this easy.
+  </Accordion>
+  
+  <Accordion title="Reference previous entries">
+    Before creating a new entry, review recent notes to track patient progress and ensure continuity in your documentation.
+  </Accordion>
+  
+  <Accordion title="Include treatment changes">
+    Always document when you modify medications, dosages, or treatment plans. This creates a clear record of clinical decision-making.
+  </Accordion>
+  
+  <Accordion title="Note patient education">
+    Record what instructions or education you provided to the patient. This helps ensure consistent messaging across visits.
+  </Accordion>
+</AccordionGroup>
+
+## Clinical note structure examples
+
+### Example 1: Follow-up visit
+
+```
+Follow-up - Hypertension Management
+
+Subjective:
+• Patient reports good medication compliance
+• No side effects noted
+• Occasional headaches (1-2x per week)
+
+Objective:
+• BP: 128/82 mmHg (improved from 145/90)
+• HR: 72 bpm
+• Weight: 78 kg (stable)
+
+Assessment:
+Hypertension responding well to current therapy. BP approaching target range.
+
+Plan:
+1. Continue Losartan 50mg daily
+2. Return in 4 weeks for BP check
+3. Patient to maintain home BP log
+4. Advised to reduce salt intake
+```
+
+### Example 2: Initial consultation
+
+```
+Initial Consultation - Chronic Back Pain
+
+Chief Complaint:
+Lower back pain x 6 months, worsening over past 2 weeks
+
+History of Present Illness:
+• Pain described as dull, constant ache
+• Worse with prolonged sitting
+• No radiation to legs
+• No numbness or tingling
+• No trauma history
+
+Physical Examination:
+• Tenderness over L4-L5 region
+• ROM: Limited flexion (pain at 45°)
+• Negative straight leg raise bilaterally
+• Normal gait
+• No neurological deficits
+
+Diagnosis:
+Mechanical lower back pain, likely facet-mediated
+
+Treatment Plan:
+1. Prescribed: Naproxen 500mg BID x 7 days
+2. Physical therapy referral
+3. Patient education: posture, ergonomics
+4. Follow-up in 2 weeks
+```
+
+### Example 3: Treatment response
+
+```
+Treatment Response - Diabetes Type 2
+
+Lab Results Review:
+• HbA1c: 7.2% (down from 8.9% three months ago)
+• Fasting glucose: 132 mg/dL
+• Lipid panel: within normal limits
+
+Current Medications:
+• Metformin 1000mg BID
+• Glipizide 5mg daily
+
+Assessment:
+Excellent response to current diabetes regimen. Patient demonstrates good understanding of diet modifications.
+
+Plan:
+• Continue current medications
+• Repeat HbA1c in 3 months
+• Continue dietary counseling
+• Patient to maintain glucose log
+```
+
+## Patient privacy and security
+
+Clinical evolution entries are:
+
+- **Patient-specific**: Only viewable when that patient is selected
+- **Timestamped**: Automatically recorded with creation date and time
+- **Permanent**: Entries cannot be edited or deleted after creation (ensuring medical record integrity)
+- **Secure**: Access is controlled by user authentication and permissions
+
+<Note>
+  Once a clinical evolution entry is saved, it cannot be edited or deleted. Review your note carefully before clicking "Agregar Entrada".
+</Note>
+
+## Integration with other modules
+
+Clinical evolution works alongside:
+
+- **Patient Management**: Clinical notes are tied to the selected patient
+- **Appointments**: Reference appointment dates when documenting visit notes
+- **Prescriptions**: Cross-reference prescribed medications in clinical notes
+
+This creates a comprehensive patient record that combines demographic data, appointment history, clinical observations, and prescriptions in one unified system.

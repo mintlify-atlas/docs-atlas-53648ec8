@@ -1,0 +1,380 @@
+---
+title: Deploy to Vercel
+description: Step-by-step guide to deploy DoctorSoft+ on Vercel with zero-configuration deployment
+---
+
+Vercel provides a powerful deployment platform with automatic builds, edge network optimization, and instant rollbacks. This guide walks through deploying DoctorSoft+ to Vercel.
+
+## Prerequisites
+
+Before deploying to Vercel, ensure you have:
+
+- A Vercel account ([sign up for free](https://vercel.com/signup))
+- Your code in a Git repository (GitHub, GitLab, or Bitbucket)
+- Supabase project URL and anon key
+- All required environment variables ready
+
+## Deployment steps
+
+<Steps>
+  <Step title="Connect your repository">
+    1. Log in to [Vercel](https://vercel.com/)
+    2. Click "Add New..." > "Project"
+    3. Choose your Git provider (GitHub, GitLab, or Bitbucket)
+    4. Authorize Vercel to access your repositories
+    5. Select the DoctorSoft+ repository
+    6. Click "Import"
+  </Step>
+
+  <Step title="Configure project settings">
+    Vercel will automatically detect the framework and configure build settings:
+
+    | Setting | Value |
+    |---------|-------|
+    | Framework Preset | Vite |
+    | Build Command | `npm run build` |
+    | Output Directory | `dist` |
+    | Install Command | `npm install` |
+
+    <Note>
+      Vercel automatically detects Vite projects and configures optimal settings. You typically don't need to change these.
+    </Note>
+  </Step>
+
+  <Step title="Add environment variables">
+    Before deploying, add all required environment variables:
+
+    1. In the project configuration screen, expand "Environment Variables"
+    2. Add the following required variables:
+
+    ```bash
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-anon-key-here
+    VITE_MAX_FILE_SIZE_MB=10
+    VITE_BUCKET_NAME=your-bucket-name
+    ```
+
+    3. Select which environments each variable applies to:
+       - **Production:** Live site
+       - **Preview:** Pull request deployments
+       - **Development:** Local development (optional)
+
+    <Warning>
+      The build will fail if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are not set for Production and Preview environments.
+    </Warning>
+  </Step>
+
+  <Step title="Deploy">
+    1. Click "Deploy"
+    2. Vercel will clone your repository and start the build process
+    3. Monitor the build logs in real-time
+    4. Once complete, your site will be live at a Vercel subdomain (e.g., `doctorsoft-plus.vercel.app`)
+  </Step>
+
+  <Step title="Configure custom domain (optional)">
+    To use a custom domain:
+
+    1. Go to your project dashboard
+    2. Click "Settings" > "Domains"
+    3. Click "Add"
+    4. Enter your domain name
+    5. Follow the instructions to update your DNS settings
+    6. Vercel will automatically provision an SSL certificate
+  </Step>
+</Steps>
+
+## Environment variable configuration
+
+If you need to add or update environment variables after deployment:
+
+<Steps>
+  <Step title="Navigate to project settings">
+    1. Go to your project in the Vercel dashboard
+    2. Click "Settings"
+    3. Navigate to "Environment Variables"
+  </Step>
+
+  <Step title="Add or edit variables">
+    1. Enter the variable name and value
+    2. Select which environments it applies to:
+       - Production
+       - Preview
+       - Development
+    3. Click "Save"
+  </Step>
+
+  <Step title="Redeploy to apply changes">
+    Environment variable changes require a new deployment:
+
+    **Option 1: Trigger from dashboard**
+    1. Go to the "Deployments" tab
+    2. Click the three dots menu on the latest deployment
+    3. Select "Redeploy"
+
+    **Option 2: Push a new commit**
+    Push any commit to trigger an automatic deployment.
+  </Step>
+</Steps>
+
+### Environment scopes
+
+Vercel allows you to set environment variables for different contexts:
+
+- **Production:** Used for your production domain deployments
+- **Preview:** Used for pull request and branch preview deployments
+- **Development:** Available when using `vercel dev` locally
+
+<Note>
+  It's recommended to set the same values for Production and Preview to ensure consistency across environments.
+</Note>
+
+## SPA routing configuration
+
+DoctorSoft+ is a single-page application that uses client-side routing. Vercel automatically handles SPA routing for Vite projects, but you can customize this behavior if needed.
+
+### Automatic routing
+
+Vercel automatically configures rewrites for SPA applications. No additional configuration is required.
+
+### Custom configuration (optional)
+
+If you need custom routing rules, create a `vercel.json` file in your repository root:
+
+<CodeGroup>
+```json vercel.json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+<Note>
+  The `vercel.json` file is optional. Vercel's automatic detection works well for most Vite applications.
+</Note>
+
+## Continuous deployment
+
+Vercel automatically deploys your site whenever you push to your repository:
+
+1. **Production deployments:** Every push to the main/master branch creates a production deployment
+2. **Preview deployments:** Pull requests and other branches get unique preview URLs
+3. **Instant rollbacks:** Quickly rollback to any previous deployment with one click
+
+### Preview deployments
+
+Every pull request automatically gets a preview deployment:
+
+- Unique URL for each PR (e.g., `doctorsoft-plus-git-feature-branch.vercel.app`)
+- Automatically updated when new commits are pushed
+- Comment on PR with deployment URL and status
+- Perfect for testing changes before merging
+
+### Deployment notifications
+
+Configure notifications for deployment events:
+
+1. Go to Project Settings > Notifications
+2. Connect integrations:
+   - Slack
+   - Discord
+   - Email
+   - GitHub (automatic PR comments)
+
+## Monitoring and analytics
+
+### Deployment logs
+
+To view deployment logs:
+
+1. Go to the "Deployments" tab
+2. Click on any deployment
+3. View real-time build logs
+4. Check runtime logs for your deployment
+
+### Vercel Analytics
+
+Enable Vercel Analytics to monitor performance:
+
+1. Go to your project dashboard
+2. Click "Analytics"
+3. Enable analytics
+4. View metrics:
+   - Real user monitoring (Core Web Vitals)
+   - Page load times
+   - Geographic distribution
+   - Top pages and routes
+
+### Speed Insights
+
+Enable Speed Insights for detailed performance data:
+
+1. Go to Project Settings > Speed Insights
+2. Enable Speed Insights
+3. Add the analytics script to your app (automatic with Vercel)
+4. Monitor Core Web Vitals and performance scores
+
+## Troubleshooting
+
+### Build fails with "Error: Command failed"
+
+**Common causes:**
+- Missing environment variables
+- TypeScript compilation errors
+- Dependency installation failures
+
+**Solutions:**
+1. Check the build logs for specific error messages
+2. Verify all required environment variables are set for Production and Preview
+3. Ensure `package.json` and `package-lock.json` are committed
+4. Try building locally: `npm run build`
+5. Check that Node.js version matches (18+)
+
+### Blank page after deployment
+
+**Common causes:**
+- Missing environment variables
+- JavaScript errors in production
+- Incorrect build output directory
+
+**Solutions:**
+1. Open browser console and check for errors
+2. Verify all environment variables in Project Settings
+3. Confirm output directory is set to `dist`
+4. Test production build locally: `npm run build && npm run preview`
+5. Check deployment logs for warnings
+
+### Environment variables not updating
+
+**Common causes:**
+- Forgot to redeploy after adding variables
+- Variable set for wrong environment (Production vs Preview)
+- Browser caching old deployment
+
+**Solutions:**
+1. Trigger a new deployment from the Deployments tab
+2. Verify variable is set for correct environment (Production/Preview/Development)
+3. Clear browser cache or test in incognito mode
+4. Check deployment logs to confirm new variables are being used
+
+### 404 errors on routes
+
+**Common causes:**
+- SPA rewrites not configured (rare with Vite auto-detection)
+- Custom `vercel.json` configuration error
+
+**Solutions:**
+1. Remove custom `vercel.json` and let Vercel auto-detect
+2. Verify rewrite rules in `vercel.json` if using custom config
+3. Check deployment configuration in dashboard
+4. Test routes directly by navigating from home page
+
+## Performance optimization
+
+Vercel automatically provides:
+
+- **Edge Network:** Global CDN with 100+ edge locations
+- **Automatic compression:** Brotli and gzip compression
+- **Smart caching:** Intelligent caching based on file types
+- **HTTP/3:** Latest protocol for faster connections
+- **Image Optimization:** Automatic image optimization (when using Vercel Image component)
+
+### Additional optimizations
+
+1. **Enable Edge Caching:**
+   - Vercel automatically caches static assets at the edge
+   - Configure custom cache headers via `vercel.json` (see above)
+
+2. **Use Vercel Analytics:**
+   - Monitor real user performance
+   - Identify slow pages and optimize accordingly
+
+3. **Optimize bundle size:**
+   - Review Vite's code splitting configuration
+   - DoctorSoft+ already includes optimized chunk splitting (see `vite.config.ts:36-92`)
+
+4. **Enable Speed Insights:**
+   - Track Core Web Vitals
+   - Get actionable performance recommendations
+
+## Advanced features
+
+### Serverless Functions
+
+If you need backend functionality, Vercel supports serverless functions:
+
+1. Create an `api/` directory in your project root
+2. Add serverless function files (e.g., `api/hello.ts`)
+3. Deploy - functions are automatically detected and deployed
+
+### Edge Functions
+
+For ultra-low latency, use Edge Functions:
+
+1. Create an `edge/` directory
+2. Add Edge Function files
+3. Configure in `vercel.json`
+
+### Protection
+
+Add password protection or authentication to deployments:
+
+1. Go to Project Settings > Deployment Protection
+2. Enable password protection for preview deployments
+3. Configure Vercel Authentication for production (Pro plan)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/deployment/environment-variables">
+    Learn about all available environment variables
+  </Card>
+  
+  <Card title="Deployment Overview" icon="rocket" href="/deployment/overview">
+    Back to deployment overview
+  </Card>
+  
+  <Card title="Vercel Documentation" icon="book" href="https://vercel.com/docs">
+    Official Vercel documentation
+  </Card>
+  
+  <Card title="Analytics & Monitoring" icon="chart-line" href="https://vercel.com/docs/analytics">
+    Set up analytics and monitoring
+  </Card>
+</CardGroup>

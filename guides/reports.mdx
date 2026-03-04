@@ -1,0 +1,588 @@
+---
+title: Reports
+description: Generate, view, and print comprehensive patient reports in DoctorSoft+
+---
+
+## Overview
+
+DoctorSoft+ provides a comprehensive patient reporting system that generates detailed, printable reports containing patient demographics, medical information, contact details, and more.
+
+## PatientReport component
+
+The `PatientReport` component (`src/components/PatientReport.tsx`) renders formatted patient information for viewing and printing.
+
+### Basic usage
+
+```tsx
+import { PatientReport } from '../components/PatientReport';
+
+function ReportPage() {
+  return (
+    <PatientReport 
+      patientId="patient-uuid"
+      isModalView={false}
+    />
+  );
+}
+```
+
+### Component props
+
+<Accordion title="patientId">
+  Required. The unique identifier of the patient whose report to display.
+</Accordion>
+
+<Accordion title="isModalView">
+  Optional boolean. When `true`, renders the report in modal layout without page wrapper. Default: `false`.
+</Accordion>
+
+<Accordion title="onClose">
+  Optional callback function. Called when the close button is clicked in modal view.
+</Accordion>
+
+<Accordion title="patientData">
+  Optional patient data object. If provided, uses this data instead of fetching from API. Useful for performance optimization.
+</Accordion>
+
+## Report sections
+
+Patient reports are organized into comprehensive sections:
+
+### Patient identification
+
+Displays key identifying information:
+
+```tsx
+<div className="text-center">
+  <div className="w-16 h-16 rounded-full">
+    <User className="w-8 h-8" />
+  </div>
+  <h2>{patient.Nombre} {patient.Paterno} {patient.Materno}</h2>
+  <div>
+    <span>Folio: {patient.Folio}</span>
+    <span>• {age.formatted}</span>
+    <span>• {patient.Sexo}</span>
+    <span>• Nacido el {formatDate(patient.FechaNacimiento)}</span>
+  </div>
+</div>
+```
+
+### Personal information
+
+Includes:
+- Full name
+- Date of birth
+- Age (calculated)
+- Gender
+- Marital status
+- CURP (Mexican ID)
+- RFC (Tax ID)
+- Nationality
+- Birth state
+
+### Contact information
+
+Displays:
+- Phone number
+- Email address
+- Emergency contact
+- Street address
+- Neighborhood/settlement
+- Postal code
+- City/town
+- Municipality
+- State
+
+### Medical information
+
+Contains:
+- Blood type
+- Allergies (displayed as comma-separated list)
+- Occupation
+- Insurance provider
+- Patient type
+- Referring physician
+- Responsible party
+
+### Cultural and social information
+
+Includes:
+- Religion
+- Indigenous language
+- Ethnic group
+- Disabilities
+
+### Additional observations
+
+Displays free-form notes and observations:
+
+```tsx
+{patient.Observaciones && (
+  <InfoSection title="Observaciones Adicionales">
+    <div className="p-4 rounded-lg">
+      <p>{patient.Observaciones}</p>
+    </div>
+  </InfoSection>
+)}
+```
+
+## Report layouts
+
+### Full page report
+
+Default layout for dedicated report pages:
+
+```tsx
+<PatientReport 
+  patientId={patientId}
+  isModalView={false}
+/>
+```
+
+Features:
+- Full page layout with header
+- Navigation controls (Back button)
+- Print button in header
+- Print-optimized styling
+
+### Modal report
+
+Compact layout for displaying in modals:
+
+```tsx
+<Modal isOpen={showReport} onClose={handleClose}>
+  <PatientReport 
+    patientId={patientId}
+    isModalView={true}
+    onClose={handleClose}
+    patientData={patient}
+  />
+</Modal>
+```
+
+Features:
+- Compact layout without page wrapper
+- Close button
+- Print button
+- No background in print mode
+
+## Printing reports
+
+Reports are optimized for printing with special print styles:
+
+### Print functionality
+
+```tsx
+const handlePrint = () => {
+  // Add delay to ensure DOM is ready
+  setTimeout(() => {
+    window.print();
+  }, 100);
+};
+```
+
+### Print button
+
+```tsx
+<button onClick={handlePrint} className="print:hidden">
+  <Printer className="h-5 w-5 mr-2" />
+  Imprimir
+</button>
+```
+
+<Note>
+  The print button is automatically hidden when printing using the `print:hidden` class.
+</Note>
+
+## Print styles
+
+Reports use special styling for print media:
+
+### Print-specific classes
+
+```tsx
+className="text-2xl font-bold print:text-black"
+className="rounded-lg shadow-lg print:shadow-none print:rounded-none"
+className="flex gap-2 print:hidden"
+className="hidden print:block"
+```
+
+### Print optimizations
+
+<Steps>
+  <Step title="Remove interactive elements">
+    Buttons, navigation, and controls are hidden in print:
+    
+    ```css
+    .print\:hidden {
+      display: none;
+    }
+    ```
+  </Step>
+  
+  <Step title="Simplify colors">
+    Theme colors are replaced with black text for better printing:
+    
+    ```tsx
+    className="print:text-black print:border-black"
+    ```
+  </Step>
+  
+  <Step title="Remove shadows and effects">
+    Decorative elements are removed:
+    
+    ```tsx
+    className="shadow-lg print:shadow-none"
+    className="rounded-lg print:rounded-none"
+    ```
+  </Step>
+  
+  <Step title="Optimize layout">
+    Grid layouts are preserved with print-specific classes:
+    
+    ```tsx
+    className="grid grid-cols-3 print:!grid print:!grid-cols-2"
+    ```
+  </Step>
+</Steps>
+
+### Print event handlers
+
+For modal views, special print event handling ensures proper rendering:
+
+```tsx
+useEffect(() => {
+  if (!isModalView) return;
+  
+  const handleBeforePrint = () => {
+    document.body.classList.add('is-printing-modal');
+  };
+  
+  const handleAfterPrint = () => {
+    document.body.classList.remove('is-printing-modal');
+  };
+  
+  window.addEventListener('beforeprint', handleBeforePrint);
+  window.addEventListener('afterprint', handleAfterPrint);
+  
+  return () => {
+    window.removeEventListener('beforeprint', handleBeforePrint);
+    window.removeEventListener('afterprint', handleAfterPrint);
+    document.body.classList.remove('is-printing-modal');
+  };
+}, [isModalView]);
+```
+
+## Report page implementation
+
+The `PatientReportPage` component provides a standalone report page:
+
+```tsx
+import { PatientReportPage } from '../pages/PatientReportPage';
+
+// In your router
+<Route path="/patients/:id/report" element={<PatientReportPage />} />
+```
+
+### Auto-print feature
+
+Reports can automatically print when loaded with a query parameter:
+
+```tsx
+// Navigate to auto-printing report
+navigate(`/patients/${patientId}/report?print=true`);
+```
+
+Implementation:
+
+```tsx
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shouldAutoPrint = urlParams.get('print') === 'true';
+  
+  if (shouldAutoPrint && patient && !loading && !autoPrintTriggered) {
+    setAutoPrintTriggered(true);
+    
+    // Delay to ensure content is rendered
+    setTimeout(() => {
+      window.print();
+    }, 1000);
+  }
+}, [patient, loading, autoPrintTriggered]);
+```
+
+<Tip>
+  The 1-second delay ensures all content is fully rendered before the print dialog appears.
+</Tip>
+
+## Reusable components
+
+Reports use reusable components for consistent formatting:
+
+### InfoSection component
+
+```tsx
+const InfoSection = ({ title, children }) => {
+  const { currentTheme } = useTheme();
+  
+  return (
+    <div className="mb-6">
+      <h3 
+        className="text-lg font-semibold mb-3 pb-2 border-b-2"
+        style={{ 
+          color: currentTheme.colors.primary,
+          borderColor: currentTheme.colors.primary,
+        }}
+      >
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+```
+
+### InfoField component
+
+```tsx
+const InfoField = ({ label, value, fullWidth = false }) => {
+  const { currentTheme } = useTheme();
+  
+  return (
+    <div className={fullWidth && 'md:col-span-2 lg:col-span-3'}>
+      <dt style={{ color: currentTheme.colors.textSecondary }}>
+        {label}
+      </dt>
+      <dd style={{ color: currentTheme.colors.text }}>
+        {value || 'No especificado'}
+      </dd>
+    </div>
+  );
+};
+```
+
+## Date formatting
+
+Reports use locale-aware date formatting:
+
+```tsx
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+const formatDate = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    return format(date, "d 'de' MMMM 'de' yyyy", { locale: es });
+  } catch {
+    return dateString;
+  }
+};
+
+// Example output: "15 de marzo de 2024"
+```
+
+### Report generation timestamp
+
+```tsx
+<p>
+  Generado el {format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+</p>
+// Example: "Generado el 15 de marzo de 2024 a las 14:30"
+```
+
+## Age calculation
+
+Reports automatically calculate and display patient age:
+
+```tsx
+import { calculateAge } from '../utils/dateUtils';
+
+const age = patient.FechaNacimiento ? calculateAge(patient.FechaNacimiento) : null;
+
+// Display formatted age
+{age && <span>{age.formatted}</span>}
+// Example: "42 años"
+```
+
+## Loading and error states
+
+### Loading state
+
+```tsx
+if (loading || authLoading) {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2" />
+      <span>Cargando datos del paciente...</span>
+    </div>
+  );
+}
+```
+
+### Error state
+
+```tsx
+if (error) {
+  return (
+    <div className="p-4 rounded-md border-l-4 bg-red-50 border-red-600">
+      <p>{error}</p>
+      <button onClick={() => window.history.back()}>
+        <ArrowLeft className="h-5 w-5" />
+        Volver
+      </button>
+    </div>
+  );
+}
+```
+
+### No patient found
+
+```tsx
+if (!patient) {
+  return (
+    <div>
+      <p>Paciente no encontrado</p>
+      <button onClick={() => window.history.back()}>Volver</button>
+    </div>
+  );
+}
+```
+
+## Performance optimization
+
+Optimize report loading with data pre-fetching:
+
+```tsx
+// Pre-fetch patient data before showing report
+const [patientData, setPatientData] = useState(null);
+
+useEffect(() => {
+  const fetchPatient = async () => {
+    const data = await api.patients.getById(patientId);
+    setPatientData(data);
+  };
+  fetchPatient();
+}, [patientId]);
+
+// Pass pre-fetched data to report
+<PatientReport 
+  patientId={patientId}
+  patientData={patientData}
+  isModalView={true}
+/>
+```
+
+<Tip>
+  Pre-fetching patient data eliminates the loading delay when opening reports in modals.
+</Tip>
+
+## Report footer
+
+Add a professional footer for printed reports:
+
+```tsx
+<div className="hidden print:block mt-12 pt-6 border-t border-gray-300">
+  <div className="text-center text-sm text-gray-600">
+    <p>DoctorSoft+ - Sistema de Gestión Médica</p>
+    <p>
+      Ficha generada el {format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+    </p>
+  </div>
+</div>
+```
+
+<Note>
+  The footer is only visible when printing, not on screen.
+</Note>
+
+## Best practices
+
+<Steps>
+  <Step title="Validate authentication">
+    Always check user authentication before displaying patient reports:
+    
+    ```tsx
+    const { user, loading: authLoading } = useAuth();
+    
+    if (!authLoading && !user) {
+      setError('Usuario no autenticado para ver el informe.');
+      return;
+    }
+    ```
+  </Step>
+  
+  <Step title="Handle missing data gracefully">
+    Display "No especificado" for empty fields instead of showing null or undefined:
+    
+    ```tsx
+    <dd>{value || 'No especificado'}</dd>
+    ```
+  </Step>
+  
+  <Step title="Use print delays">
+    Add small delays before auto-printing to ensure content is rendered:
+    
+    ```tsx
+    setTimeout(() => window.print(), 1000);
+    ```
+  </Step>
+  
+  <Step title="Optimize print styles">
+    Use `print:` Tailwind classes for print-specific styling:
+    
+    ```tsx
+    className="shadow-lg print:shadow-none"
+    className="text-blue-600 print:text-black"
+    ```
+  </Step>
+  
+  <Step title="Pre-fetch data for modals">
+    When showing reports in modals, pre-fetch patient data to avoid loading states.
+  </Step>
+</Steps>
+
+## Navigation integration
+
+Integrate reports into your application navigation:
+
+```tsx
+import { useNavigate } from 'react-router-dom';
+
+// Navigate to report page
+const navigate = useNavigate();
+navigate(`/patients/${patientId}/report`);
+
+// Navigate to report with auto-print
+navigate(`/patients/${patientId}/report?print=true`);
+
+// Open in new tab for printing
+window.open(
+  `/patients/${patientId}/report?print=true`,
+  '_blank',
+  'noopener,noreferrer'
+);
+```
+
+## Themed report styling
+
+Reports respect the active theme for on-screen viewing:
+
+```tsx
+const { currentTheme } = useTheme();
+
+<div
+  style={{
+    background: currentTheme.colors.surface,
+    color: currentTheme.colors.text,
+    borderColor: currentTheme.colors.border,
+  }}
+>
+  Report content
+</div>
+```
+
+<Warning>
+  Theme colors are automatically converted to print-friendly black and white when printing.
+</Warning>

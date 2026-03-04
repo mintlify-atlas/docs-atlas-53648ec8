@@ -1,0 +1,279 @@
+---
+title: Environment variables
+description: Configure all required environment variables for DoctorSoft+ deployment
+---
+
+DoctorSoft+ requires specific environment variables to connect to Supabase and configure application behavior. All environment variables must be prefixed with `VITE_` to be accessible in the client-side application.
+
+## Required variables
+
+These environment variables are **required** for the application to function:
+
+### `VITE_SUPABASE_URL`
+
+<ParamField path="VITE_SUPABASE_URL" type="string" required>
+  The URL of your Supabase project.
+</ParamField>
+
+**Description:** The base URL for your Supabase instance. This is used to connect to your Supabase database, authentication, and storage services.
+
+**Example:**
+```bash
+VITE_SUPABASE_URL=https://0ec90b57d6e95fcbda19832f.supabase.co
+```
+
+**Where to find it:**
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project
+3. Navigate to Settings > API
+4. Copy the "Project URL" value
+
+<Warning>
+  The build will fail if this variable is not set. Ensure it's configured before deploying.
+</Warning>
+
+### `VITE_SUPABASE_ANON_KEY`
+
+<ParamField path="VITE_SUPABASE_ANON_KEY" type="string" required>
+  The anonymous (public) API key for your Supabase project.
+</ParamField>
+
+**Description:** The public anon key used for client-side authentication and database access. This key is safe to expose in client-side code and respects Row Level Security (RLS) policies.
+
+**Example:**
+```bash
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw
+```
+
+**Where to find it:**
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project
+3. Navigate to Settings > API
+4. Copy the "anon public" key under "Project API keys"
+
+<Warning>
+  The build will fail if this variable is not set. This is your project's public key, not the service role key.
+</Warning>
+
+## Optional variables
+
+These environment variables have default values and are optional:
+
+### `VITE_MAX_FILE_SIZE_MB`
+
+<ParamField path="VITE_MAX_FILE_SIZE_MB" type="number" default="10">
+  Maximum file upload size in megabytes.
+</ParamField>
+
+**Description:** Controls the maximum size allowed for file uploads in the application. Files larger than this limit will be rejected before uploading to Supabase Storage.
+
+**Default:** `10` (MB)
+
+**Example:**
+```bash
+VITE_MAX_FILE_SIZE_MB=10
+```
+
+**Usage in code:** `src/components/FileUpload.tsx:48` and `src/FileUpload.tsx:46`
+
+<Note>
+  If not set, the application will use the default value of 10MB and log a warning in the console.
+</Note>
+
+### `VITE_BUCKET_NAME`
+
+<ParamField path="VITE_BUCKET_NAME" type="string" default="00000000-default-bucket">
+  The name of the Supabase Storage bucket for file uploads.
+</ParamField>
+
+**Description:** Specifies which Supabase Storage bucket to use for file uploads. This bucket must exist in your Supabase project.
+
+**Default:** `00000000-default-bucket`
+
+**Example:**
+```bash
+VITE_BUCKET_NAME=medical-documents
+```
+
+**Usage in code:** `src/components/FileUpload.tsx:49` and `src/FileUpload.tsx:47`
+
+<Note>
+  Ensure the bucket exists in your Supabase project (Dashboard > Storage) and has appropriate RLS policies configured.
+</Note>
+
+### `VITE_APP_VERSION`
+
+<ParamField path="VITE_APP_VERSION" type="string" default="dev">
+  Application version string sent in API headers.
+</ParamField>
+
+**Description:** Version identifier sent in the `x-application-name` header with Supabase requests. Useful for tracking which version of the app is making requests.
+
+**Default:** `dev`
+
+**Example:**
+```bash
+VITE_APP_VERSION=25.40
+```
+
+**Usage in code:** `src/supabase.ts:75` and `src/lib/supabase.ts:75`
+
+### `VITE_SUPABASE_DETECT_SESSION_IN_URL`
+
+<ParamField path="VITE_SUPABASE_DETECT_SESSION_IN_URL" type="boolean" default="false">
+  Enable OAuth session detection from URL parameters.
+</ParamField>
+
+**Description:** Controls whether the Supabase client should automatically detect and handle OAuth sessions from URL parameters. This is only needed if you're using OAuth providers (Google, GitHub, etc.).
+
+**Default:** `false` (disabled for better performance)
+
+**Example:**
+```bash
+VITE_SUPABASE_DETECT_SESSION_IN_URL=true
+```
+
+**Usage in code:** `src/supabase.ts:78` and `src/lib/supabase.ts:78`
+
+<Note>
+  This is disabled by default to improve performance. Only enable if you're using OAuth authentication providers.
+</Note>
+
+### `VITE_OPENAI_API_KEY`
+
+<ParamField path="VITE_OPENAI_API_KEY" type="string">
+  OpenAI API key for AI-powered features.
+</ParamField>
+
+**Description:** API key for OpenAI services used in AI-powered features of the application. This is optional and only required if you're using AI features.
+
+**Example:**
+```bash
+VITE_OPENAI_API_KEY=sk-...
+```
+
+**Usage in code:** `src/services/openaiService.ts:13`
+
+<Warning>
+  This key is exposed in client-side code. Consider using a backend proxy for production to keep the API key secure.
+</Warning>
+
+## Setting environment variables
+
+How you set environment variables depends on your deployment platform:
+
+### Local development
+
+Create a `.env` file in the root of your project:
+
+```bash
+# .env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAX_FILE_SIZE_MB=10
+VITE_BUCKET_NAME=your-bucket-name
+```
+
+<Note>
+  Never commit your `.env` file to version control. Add it to `.gitignore`.
+</Note>
+
+### Netlify
+
+1. Go to Site Settings > Build & Deploy > Environment
+2. Click "Add a variable"
+3. Add each environment variable and its value
+4. Deploy or re-deploy your site
+
+See the [Netlify deployment guide](/deployment/netlify) for detailed instructions.
+
+### Vercel
+
+1. Go to Project Settings > Environment Variables
+2. Add each environment variable
+3. Select which environments to apply to (Production, Preview, Development)
+4. Save and re-deploy
+
+See the [Vercel deployment guide](/deployment/vercel) for detailed instructions.
+
+### Docker
+
+Pass environment variables when running the container:
+
+```bash
+docker run -d \
+  -e VITE_SUPABASE_URL=https://your-project.supabase.co \
+  -e VITE_SUPABASE_ANON_KEY=your-anon-key \
+  -e VITE_MAX_FILE_SIZE_MB=10 \
+  -e VITE_BUCKET_NAME=your-bucket-name \
+  -p 3000:3000 \
+  doctorsoft-plus
+```
+
+See the [Docker deployment guide](/deployment/docker) for detailed instructions.
+
+## Build-time validation
+
+The Vite configuration (`vite.config.ts:5-27`) validates environment variables at build time:
+
+<CodeGroup>
+```typescript vite.config.ts
+const requiredEnvVars = [
+  { name: 'VITE_SUPABASE_URL', required: true },
+  { name: 'VITE_SUPABASE_ANON_KEY', required: true },
+  { name: 'VITE_MAX_FILE_SIZE_MB', required: false, default: '10' },
+  { name: 'VITE_BUCKET_NAME', required: false, default: '00000000-default-bucket' }
+];
+
+let hasErrors = false;
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar.name]) {
+    if (envVar.required) {
+      console.error(`ERROR: ${envVar.name} is required but not set`);
+      hasErrors = true;
+    } else {
+      console.log(`Info: ${envVar.name} not set, will use default: ${envVar.default}`);
+    }
+  }
+}
+```
+</CodeGroup>
+
+If required variables are missing, the build will log errors to help you identify configuration issues.
+
+## Security considerations
+
+<Warning>
+  All `VITE_` environment variables are exposed in the client-side bundle. Never store secrets or private keys in these variables.
+</Warning>
+
+**Safe to expose:**
+- `VITE_SUPABASE_URL` - Public URL
+- `VITE_SUPABASE_ANON_KEY` - Public anon key (respects RLS)
+- Other `VITE_` prefixed configuration values
+
+**Never expose:**
+- Service role keys
+- Database passwords
+- Private API keys (unless proxied through a backend)
+- Secrets or tokens
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy to Netlify" icon="netlify" href="/deployment/netlify">
+    Configure environment variables in Netlify
+  </Card>
+  
+  <Card title="Deploy to Vercel" icon="vercel" href="/deployment/vercel">
+    Configure environment variables in Vercel
+  </Card>
+  
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Pass environment variables to Docker containers
+  </Card>
+  
+  <Card title="Deployment Overview" icon="rocket" href="/deployment/overview">
+    Back to deployment overview
+  </Card>
+</CardGroup>

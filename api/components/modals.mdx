@@ -1,0 +1,421 @@
+---
+title: Modal components
+description: Reusable modal dialogs for confirmations, alerts, and specialized workflows like appointment rescheduling.
+---
+
+## Overview
+
+DoctorSoft+ provides a base Modal component and specialized modal variants for common use cases. All modals support theme integration, responsive design, and print optimization.
+
+## Modal
+
+Base modal component providing overlay, content area, and optional header/footer sections.
+
+### Props
+
+<ParamField path="isOpen" type="boolean" required>
+  Controls modal visibility
+</ParamField>
+
+<ParamField path="onClose" type="() => void" required>
+  Callback fired when user clicks backdrop or close button
+</ParamField>
+
+<ParamField path="title" type="string">
+  Optional modal title displayed in header section
+</ParamField>
+
+<ParamField path="children" type="React.ReactNode" required>
+  Modal content to display in scrollable body area
+</ParamField>
+
+<ParamField path="actions" type="React.ReactNode">
+  Optional action buttons displayed in footer section
+</ParamField>
+
+<ParamField path="className" type="string" default="max-w-md">
+  Custom CSS classes for modal container (e.g., "max-w-2xl" for wider modals)
+</ParamField>
+
+### Usage
+
+<CodeGroup>
+```tsx Basic modal
+import { Modal } from '@/components/Modal';
+
+function MyComponent() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>Open Modal</button>
+      
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Confirmation"
+      >
+        <p>Are you sure you want to continue?</p>
+      </Modal>
+    </>
+  );
+}
+```
+
+```tsx Modal with actions
+import { Modal } from '@/components/Modal';
+
+function ConfirmDialog() {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Delete Patient"
+      actions={
+        <>
+          <button onClick={handleClose}>Cancel</button>
+          <button onClick={handleDelete}>Delete</button>
+        </>
+      }
+    >
+      <p>This action cannot be undone.</p>
+    </Modal>
+  );
+}
+```
+
+```tsx Custom size
+import { Modal } from '@/components/Modal';
+
+function WideModal() {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Patient Report"
+      className="max-w-6xl w-full"
+    >
+      <LargeReportComponent />
+    </Modal>
+  );
+}
+```
+</CodeGroup>
+
+### Structure
+
+The modal is composed of these sections:
+
+**Backdrop** - Full-screen semi-transparent overlay (~/workspace/source/src/components/Modal.tsx:36-40)
+- Black background with 50% opacity
+- Clicking backdrop triggers `onClose`
+- Hidden when printing
+
+**Container** - White content box (~/workspace/source/src/components/Modal.tsx:43-52)
+- Rounded corners and shadow
+- Theme-aware background and border colors
+- Responsive width based on `className` prop
+- Print-optimized (removes shadow, rounds, constraints)
+
+**Header** (optional) - Title section (~/workspace/source/src/components/Modal.tsx:55-67)
+- Displayed when `title` prop provided
+- Bottom border separation
+- Hidden when printing
+
+**Body** - Scrollable content area (~/workspace/source/src/components/Modal.tsx:70-76)
+- Max height 90vh with vertical scroll
+- Theme-aware text color
+- Padding maintained when printing
+
+**Footer** (optional) - Action buttons (~/workspace/source/src/components/Modal.tsx:78-85)
+- Displayed when `actions` prop provided
+- Top border separation
+- Right-aligned content
+- Hidden when printing
+
+### Print optimization
+
+Modal includes special print styles:
+- Removes backdrop and decorative elements
+- Expands to full width
+- Removes max-height constraint
+- Maintains content readability
+
+See print-specific classes in ~/workspace/source/src/components/Modal.tsx:34-86
+
+---
+
+## AlertModal
+
+Pre-styled modal for displaying alert messages with contextual colors and icons.
+
+### Props
+
+<ParamField path="isOpen" type="boolean" required>
+  Controls modal visibility
+</ParamField>
+
+<ParamField path="onClose" type="() => void" required>
+  Callback fired when user dismisses the alert
+</ParamField>
+
+<ParamField path="type" type="'error' | 'warning' | 'info' | 'success'" required>
+  Alert severity level determining colors and icon
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  Alert title displayed in modal header
+</ParamField>
+
+<ParamField path="message" type="string" required>
+  Alert message content
+</ParamField>
+
+### Alert types
+
+Each type uses specific colors and icons (~/workspace/source/src/components/AlertModal.tsx:18-56):
+
+<Tabs>
+  <Tab title="Error">
+    **Icon:** XCircle
+    
+    **Colors:** Red theme (Red-100 background, Red-600 text)
+    
+    **Usage:** Critical errors, failed operations, validation failures
+  </Tab>
+  <Tab title="Warning">
+    **Icon:** AlertCircle
+    
+    **Colors:** Yellow theme (Yellow-100 background, Yellow-700 text)
+    
+    **Usage:** Warnings, potential issues, confirmations needed
+  </Tab>
+  <Tab title="Info">
+    **Icon:** Info
+    
+    **Colors:** Blue theme (Blue-100 background, Blue-600 text)
+    
+    **Usage:** Informational messages, tips, neutral notifications
+  </Tab>
+  <Tab title="Success">
+    **Icon:** CheckCircle
+    
+    **Colors:** Green theme (Green-100 background, Green-600 text)
+    
+    **Usage:** Successful operations, confirmations, positive feedback
+  </Tab>
+</Tabs>
+
+### Usage
+
+<CodeGroup>
+```tsx Error alert
+import { AlertModal } from '@/components/AlertModal';
+
+function DeletePatient() {
+  const [error, setError] = useState(null);
+
+  const handleDelete = async () => {
+    try {
+      await api.patients.delete(id);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <AlertModal
+      isOpen={!!error}
+      onClose={() => setError(null)}
+      type="error"
+      title="Error al eliminar paciente"
+      message={error}
+    />
+  );
+}
+```
+
+```tsx Success confirmation
+import { AlertModal } from '@/components/AlertModal';
+
+function SaveForm() {
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleSave = async (data) => {
+    await api.save(data);
+    setShowSuccess(true);
+  };
+
+  return (
+    <AlertModal
+      isOpen={showSuccess}
+      onClose={() => setShowSuccess(false)}
+      type="success"
+      title="Guardado exitoso"
+      message="Los cambios se guardaron correctamente."
+    />
+  );
+}
+```
+
+```tsx Warning prompt
+import { AlertModal } from '@/components/AlertModal';
+
+function UnsavedChanges() {
+  return (
+    <AlertModal
+      isOpen={hasUnsavedChanges}
+      onClose={handleClose}
+      type="warning"
+      title="Cambios sin guardar"
+      message="Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?"
+    />
+  );
+}
+```
+</CodeGroup>
+
+### Features
+
+- Themed "Aceptar" button matching current theme
+- Icon and message in colored container
+- Consistent spacing and layout
+- Accessible color contrast
+
+---
+
+## AppointmentRescheduleModal
+
+Specialized modal for confirming appointment rescheduling with dynamic status selection based on workflow rules.
+
+### Props
+
+<ParamField path="isOpen" type="boolean" required>
+  Controls modal visibility
+</ParamField>
+
+<ParamField path="onClose" type="() => void" required>
+  Callback fired when user cancels
+</ParamField>
+
+<ParamField path="onConfirm" type="(newStatusId: number) => void" required>
+  Callback fired when user confirms, receives selected status ID
+</ParamField>
+
+<ParamField path="originalDate" type="string" required>
+  Original appointment date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField path="originalTime" type="string" required>
+  Original appointment time in HH:MM format
+</ParamField>
+
+<ParamField path="newDate" type="string" required>
+  New appointment date in YYYY-MM-DD format
+</ParamField>
+
+<ParamField path="newTime" type="string" required>
+  New appointment time in HH:MM format
+</ParamField>
+
+<ParamField path="patientName" type="string" required>
+  Patient's full name for display
+</ParamField>
+
+<ParamField path="reason" type="string" required>
+  Appointment reason/motivo
+</ParamField>
+
+<ParamField path="currentStatusId" type="number" required>
+  Current appointment status ID for determining allowed transitions
+</ParamField>
+
+### Usage
+
+```tsx
+import { AppointmentRescheduleModal } from '@/components/AppointmentRescheduleModal';
+
+function AgendaView() {
+  const [rescheduleData, setRescheduleData] = useState(null);
+
+  const handleDrop = (appointment, newDate, newTime) => {
+    setRescheduleData({
+      appointment,
+      newDate,
+      newTime
+    });
+  };
+
+  const handleConfirmReschedule = async (newStatusId) => {
+    await api.appointments.update(rescheduleData.appointment.id, {
+      fecha_cita: rescheduleData.newDate,
+      hora_cita: rescheduleData.newTime,
+      estado: newStatusId
+    });
+    setRescheduleData(null);
+    refreshAppointments();
+  };
+
+  return (
+    <>
+      <Calendar onDrop={handleDrop} />
+      
+      {rescheduleData && (
+        <AppointmentRescheduleModal
+          isOpen={true}
+          onClose={() => setRescheduleData(null)}
+          onConfirm={handleConfirmReschedule}
+          originalDate={rescheduleData.appointment.fecha_cita}
+          originalTime={rescheduleData.appointment.hora_cita}
+          newDate={rescheduleData.newDate}
+          newTime={rescheduleData.newTime}
+          patientName={rescheduleData.appointment.patientName}
+          reason={rescheduleData.appointment.motivo}
+          currentStatusId={rescheduleData.appointment.estado}
+        />
+      )}
+    </>
+  );
+}
+```
+
+### Status workflow
+
+The modal fetches allowed status transitions based on current status using `api.appointments.getFilteredStatusOptions()` (~/workspace/source/src/components/AppointmentRescheduleModal.tsx:52-74).
+
+Default selection logic:
+1. Prefers "Reprogramada x Paciente" (ID: 9) or "Reprogramada x Médico" (ID: 10)
+2. Falls back to first allowed status
+3. Maintains current status if no transitions allowed
+
+### Display sections
+
+**Patient info panel** (~/workspace/source/src/components/AppointmentRescheduleModal.tsx:135-151)
+- Patient name with User icon
+- Appointment reason
+- Highlighted with theme primary color
+
+**Date/time comparison** (~/workspace/source/src/components/AppointmentRescheduleModal.tsx:154-188)
+- Original date/time with Calendar icon
+- New date/time with Clock icon (highlighted in primary color)
+- Formatted in Spanish locale: "viernes 15 de marzo de 2024 a las 14:30"
+
+**Status selection** (~/workspace/source/src/components/AppointmentRescheduleModal.tsx:191-276)
+- Radio button cards for each allowed status
+- Shows status name, description, and usage notes
+- Selected option highlighted with primary color
+- Loading state while fetching options
+- Error state if fetch fails
+
+**Warning note** (~/workspace/source/src/components/AppointmentRescheduleModal.tsx:279-293)
+- Yellow alert box with AlertCircle icon
+- Reminds user about workflow implications
+
+### Features
+
+- Loads status options asynchronously on mount
+- Intelligent default status selection
+- Theme-integrated styling
+- Spanish date formatting
+- Loading and error states
+- Accessible radio button selection

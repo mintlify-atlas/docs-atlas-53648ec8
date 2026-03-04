@@ -1,0 +1,376 @@
+---
+title: Schedule configuration
+description: Configure appointment schedules, office hours, blocked dates, and consultation rooms in DoctorSoft+
+---
+
+## Overview
+
+The schedule configuration module allows you to set up your practice's operational parameters including appointment duration, working hours, available days, office locations, and blocked periods. These settings control how appointments are scheduled throughout your practice.
+
+<Note>
+  Changes to schedule configuration affect appointment availability immediately. Ensure settings are correct before saving.
+</Note>
+
+## Accessing schedule configuration
+
+<Steps>
+  <Step title="Navigate to Schedule Configuration">
+    From the main navigation menu, select **Configuración de Agenda** or the schedule configuration option.
+  </Step>
+  <Step title="View configuration tabs">
+    The configuration interface is organized into three tabs:
+    - **General**: Appointment duration and consultation rooms
+    - **Horarios**: Working days and hours
+    - **Bloqueos**: Date blocks and unavailability periods
+  </Step>
+</Steps>
+
+## General configuration
+
+### Appointment duration (Slot interval)
+
+Configure how long each appointment slot should last:
+
+<Steps>
+  <Step title="Select slot duration">
+    In the **General** tab, locate the "Duración de cada cita" dropdown.
+  </Step>
+  <Step title="Choose duration">
+    Select from the following options:
+    - 15 minutes
+    - 20 minutes
+    - 30 minutes
+    - 45 minutes
+    - 60 minutes
+  </Step>
+  <Step title="Save configuration">
+    Click the **Guardar** button at the top of the page to apply changes.
+  </Step>
+</Steps>
+
+<Tip>
+  Most general practitioners use 15-20 minute slots, while specialists often use 30-60 minute slots depending on the complexity of consultations.
+</Tip>
+
+### Consultation rooms (Consultorios)
+
+Manage up to 3 consultation rooms for your practice:
+
+<CardGroup cols={3}>
+  <Card title="Consultorio 1" icon="door-open">
+    Primary examination room (enabled by default)
+  </Card>
+  <Card title="Consultorio 2" icon="door-open">
+    Secondary examination room (disabled by default)
+  </Card>
+  <Card title="Consultorio 3" icon="door-open">
+    Additional examination room (disabled by default)
+  </Card>
+</CardGroup>
+
+#### Enabling/disabling consultation rooms
+
+<Steps>
+  <Step title="Locate consultorio section">
+    In the **General** tab, find the "Consultorios" section.
+  </Step>
+  <Step title="Toggle room status">
+    Click the toggle switch for each room:
+    - **Green toggle (Habilitado)**: Room is available for appointments
+    - **Gray toggle (Deshabilitado)**: Room is not available
+  </Step>
+  <Step title="Rename rooms">
+    When a room is enabled, you can customize its name by typing in the text field (e.g., "Sala de Consulta A", "Consultorio Pediatría").
+  </Step>
+  <Step title="Save changes">
+    Click **Guardar** to save consultation room configuration.
+  </Step>
+</Steps>
+
+<Warning>
+  Disabled consultation rooms cannot have their names edited. Enable a room before attempting to rename it.
+</Warning>
+
+## Working hours configuration (Horarios)
+
+### Days of operation
+
+Select which days of the week your practice is open for appointments:
+
+<Steps>
+  <Step title="Navigate to Horarios tab">
+    Click the **Horarios** tab in the configuration interface.
+  </Step>
+  <Step title="Select working days">
+    In the "Días de Atención" section, check the boxes for days you're available:
+    - Lunes (Monday)
+    - Martes (Tuesday)
+    - Miércoles (Wednesday)
+    - Jueves (Thursday)
+    - Viernes (Friday)
+    - Sábado (Saturday)
+    - Domingo (Sunday)
+  </Step>
+  <Step title="Save configuration">
+    Click **Guardar** to apply the working days schedule.
+  </Step>
+</Steps>
+
+<Note>
+  By default, Monday through Friday are selected. Weekend availability can be enabled as needed.
+</Note>
+
+### Operating hours
+
+Define your daily start and end times:
+
+<Steps>
+  <Step title="Set start time">
+    In the "Horario de Trabajo" section, select your opening time in the **Hora de inicio** field.
+  </Step>
+  <Step title="Set end time">
+    Select your closing time in the **Hora de fin** field.
+  </Step>
+  <Step title="Save configuration">
+    Click **Guardar** to apply the schedule changes.
+  </Step>
+</Steps>
+
+**Default hours**: 
+- Start: 08:00 (8:00 AM)
+- End: 20:00 (8:00 PM)
+
+<Tip>
+  These times apply to all selected working days. If you need different hours for specific days, consider using date blocks in the Bloqueos tab.
+</Tip>
+
+## Blocked dates configuration (Bloqueos)
+
+Create periods when appointments cannot be scheduled, such as vacations, conferences, holidays, or maintenance.
+
+### Types of date blocks
+
+<CardGroup cols={2}>
+  <Card title="Vacaciones" icon="umbrella-beach">
+    Personal vacation time when the practice is closed.
+  </Card>
+  <Card title="Congreso" icon="users">
+    Medical conferences, seminars, or continuing education events.
+  </Card>
+  <Card title="Descanso Obligatorio" icon="calendar-xmark">
+    Mandatory time off or legal holidays.
+  </Card>
+  <Card title="Mantenimiento consultorio" icon="wrench">
+    Office maintenance, renovations, or equipment upgrades.
+  </Card>
+  <Card title="Viaje" icon="plane">
+    Travel for professional or personal reasons.
+  </Card>
+  <Card title="Otro" icon="ellipsis">
+    Any other type of unavailability.
+  </Card>
+</CardGroup>
+
+### Adding a date block
+
+<Steps>
+  <Step title="Navigate to Bloqueos tab">
+    Click the **Bloqueos** tab in the configuration interface.
+  </Step>
+  <Step title="Set date range">
+    In the "Agregar Bloqueo" section:
+    - **Fecha de inicio**: Select the first day of unavailability
+    - **Fecha de fin**: Select the last day of unavailability
+  </Step>
+  <Step title="Choose block type">
+    Select the appropriate type from the **Tipo de bloqueo** dropdown (Vacaciones, Congreso, etc.).
+  </Step>
+  <Step title="Add description">
+    In the **Motivo** field, describe the reason for the block (e.g., "Congreso Anual de Cardiología en Guadalajara").
+  </Step>
+  <Step title="Create the block">
+    Click the **Agregar Bloqueo** button to add the date block to your schedule.
+  </Step>
+</Steps>
+
+<Warning>
+  All fields (start date, end date, type, and reason) are required when creating a date block.
+</Warning>
+
+### Viewing blocked dates
+
+Once created, blocked dates appear in the "Bloqueos Configurados" section showing:
+
+- **Type badge**: Color-coded label indicating the block type
+  - Vacaciones: Blue badge
+  - Congreso: Purple badge
+  - Descanso Obligatorio: Green badge
+  - Mantenimiento/Viaje/Otro: Gray badge
+- **Reason**: Description of why appointments are blocked
+- **Date range**: Formatted as "1 de enero de 2026 - 5 de enero de 2026"
+- **Delete button**: Trash icon to remove the block
+
+### Removing a date block
+
+<Steps>
+  <Step title="Locate the block">
+    Find the date block you want to remove in the "Bloqueos Configurados" list.
+  </Step>
+  <Step title="Click delete icon">
+    Click the red trash can icon on the right side of the block.
+  </Step>
+  <Step title="Confirm deletion">
+    A confirmation modal appears: "¿Está seguro de eliminar bloqueo de fecha? Esta acción no se puede deshacer."
+  </Step>
+  <Step title="Complete deletion">
+    Click **Eliminar** to remove the block, or **Cancelar** to keep it.
+  </Step>
+</Steps>
+
+<Note>
+  Removing a date block immediately makes those dates available for appointment scheduling again.
+</Note>
+
+## How schedule configuration affects appointments
+
+### Appointment availability calculation
+
+The system combines all configuration settings to determine available appointment slots:
+
+1. **Working days**: Only days checked in "Días de Atención" are available
+2. **Operating hours**: Slots are generated between start and end times
+3. **Slot duration**: Number of slots per day = (End time - Start time) / Slot duration
+4. **Blocked dates**: No slots available during blocked periods
+5. **Consultation rooms**: Available slots multiplied by enabled rooms
+
+### Example calculation
+
+**Configuration:**
+- Working days: Monday to Friday
+- Hours: 08:00 to 20:00 (12 hours)
+- Slot duration: 15 minutes
+- Enabled rooms: 2
+- Blocked dates: None
+
+**Result:**
+- Slots per day per room: 48 (12 hours × 4 slots per hour)
+- Total slots per day: 96 (48 slots × 2 rooms)
+- Weekly capacity: 480 appointments (96 × 5 days)
+
+## Saving configuration changes
+
+All changes must be saved to take effect:
+
+<Steps>
+  <Step title="Make your changes">
+    Modify any settings in the General, Horarios, or Bloqueos tabs.
+  </Step>
+  <Step title="Click Guardar button">
+    The **Guardar** button appears at the top-right of the page.
+  </Step>
+  <Step title="Wait for confirmation">
+    The button changes to "Guardando..." while saving. Wait for completion.
+  </Step>
+  <Step title="Verify changes">
+    The system reloads configuration from the database to confirm changes were saved.
+  </Step>
+</Steps>
+
+<Warning>
+  The **Guardar** button saves changes from the General and Horarios tabs. Date blocks (Bloqueos) are saved immediately when added.
+</Warning>
+
+## Data storage
+
+Schedule configuration is stored across multiple database tables:
+
+### Agenda settings table (tcAgendaSettings)
+
+```sql
+- start_time: Time (HH:MM:SS format)
+- end_time: Time (HH:MM:SS format)
+- consultation_days: Array of strings (day names)
+- slot_interval: Integer (minutes)
+```
+
+### Consultation rooms (tcConsultorios)
+
+```sql
+- id: Integer (1, 2, or 3)
+- consultorio: Text (room name)
+- activo: Boolean (enabled status)
+```
+
+### Blocked dates (tcBlockedDates)
+
+```sql
+- id: Text (UUID)
+- start_date: Date
+- end_date: Date
+- reason: Text
+- block_type: Enum (vacation|congress|legal|maintenance|travel|other)
+```
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Buffer time" icon="clock">
+    Consider setting your end time 30 minutes before actual closing to allow for appointment overruns.
+  </Card>
+  <Card title="Lunch breaks" icon="utensils">
+    Use date blocks for recurring lunch breaks or create separate morning/afternoon schedules.
+  </Card>
+  <Card title="Plan ahead" icon="calendar-days">
+    Add date blocks for known vacations and conferences as early as possible to prevent double-booking.
+  </Card>
+  <Card title="Room naming" icon="tag">
+    Use descriptive room names that help staff quickly identify the correct location (e.g., "Consultorio 1 - Planta Baja").
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### No appointment slots available
+**Issue**: Appointment calendar shows no available times
+
+**Solution**:
+- Verify at least one working day is selected in Horarios tab
+- Check that start time is before end time
+- Ensure at least one consultation room is enabled
+- Review blocked dates for conflicts
+
+### Configuration won't save
+**Issue**: "Error al guardar la configuración" message appears
+
+**Solution**:
+- Verify you have proper administrator permissions
+- Check that start time is earlier than end time
+- Ensure at least one working day is selected
+- Try refreshing the page and attempting again
+
+### Cannot add date block
+**Issue**: Error when clicking "Agregar Bloqueo"
+
+**Solution**:
+- Ensure all four fields are filled (start date, end date, type, reason)
+- Verify start date is before or equal to end date
+- Check that you've entered text in the Motivo field
+- Ensure dates are in valid format
+
+### Date block won't delete
+**Issue**: Error when trying to remove a blocked date
+
+**Solution**:
+- Check your internet connection
+- Verify you have administrator permissions
+- Try refreshing the page
+- Contact your system administrator if error persists
+
+### Changes not reflected in appointment calendar
+**Issue**: Schedule changes don't appear in the appointment booking interface
+
+**Solution**:
+- Ensure you clicked the **Guardar** button
+- Wait for the "Guardando..." indicator to complete
+- Refresh the appointment calendar page
+- Clear your browser cache if changes still don't appear

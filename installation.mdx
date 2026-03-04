@@ -1,0 +1,258 @@
+---
+title: Installation
+description: Learn how to install DoctorSoft+ and set up your development environment. This guide covers system requirements, dependencies, and installation steps.
+---
+
+DoctorSoft+ is a modern medical practice management application built with React, TypeScript, and Vite. This guide covers everything you need to install and run the application.
+
+## System requirements
+
+### Node.js version
+
+DoctorSoft+ requires Node.js 18 or higher. This ensures compatibility with all modern JavaScript features and dependencies.
+
+```bash
+node --version
+# Should output v18.0.0 or higher
+```
+
+<Note>
+The deployment configuration specifically requires Node.js 18+. Using an older version may result in build errors or runtime issues.
+</Note>
+
+### Operating systems
+
+DoctorSoft+ supports development on:
+
+- macOS (10.15 or later)
+- Windows (10 or later)
+- Linux (Ubuntu 20.04 or later, or equivalent)
+
+### Browser requirements
+
+For the best experience, use a modern browser:
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Installation steps
+
+<Steps>
+  <Step title="Install Node.js">
+    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/).
+    
+    Verify the installation:
+    
+    ```bash
+    node --version
+    npm --version
+    ```
+  </Step>
+
+  <Step title="Clone the repository">
+    Clone the DoctorSoft+ repository:
+    
+    ```bash
+    git clone <your-repository-url>
+    cd DoctorSoft+
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Run npm install to download all required packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This will install approximately 60 packages, including:
+    
+    - **React ecosystem**: react, react-dom, react-router-dom
+    - **Supabase**: @supabase/supabase-js for database and authentication
+    - **State management**: @tanstack/react-query for server state
+    - **Form handling**: react-hook-form with zod validation
+    - **UI components**: lucide-react for icons, chart.js for analytics
+    - **Calendar**: @fullcalendar for appointment scheduling
+    - **Rich text**: quill and react-quill for clinical notes
+    - **Build tools**: vite, typescript, tailwindcss
+  </Step>
+
+  <Step title="Verify installation">
+    Check that all dependencies were installed correctly:
+    
+    ```bash
+    npm list --depth=0
+    ```
+    
+    You should see output similar to this:
+    
+    ```
+    DoctorSoft+@25.40
+    ├── @dnd-kit/core@6.1.0
+    ├── @fullcalendar/react@6.1.11
+    ├── @supabase/supabase-js@2.53.0
+    ├── react@18.3.1
+    ├── react-dom@18.3.1
+    └── ... (and more)
+    ```
+  </Step>
+</Steps>
+
+## Core dependencies
+
+### Frontend framework
+
+DoctorSoft+ is built with React 18.3+ and TypeScript for type safety:
+
+```json
+{
+  "react": "^18.3.1",
+  "react-dom": "^18.3.1",
+  "typescript": "^5.2.2"
+}
+```
+
+### Build tool
+
+Vite 7+ is used as the build tool for fast development and optimized production builds:
+
+```json
+{
+  "vite": "^7.1.7",
+  "@vitejs/plugin-react": "^4.2.1"
+}
+```
+
+### Database and authentication
+
+Supabase provides the backend infrastructure:
+
+```json
+{
+  "@supabase/supabase-js": "^2.53.0"
+}
+```
+
+### UI and styling
+
+Tailwind CSS is used for styling:
+
+```json
+{
+  "tailwindcss": "^3.4.1",
+  "@tailwindcss/forms": "^0.5.7",
+  "autoprefixer": "^10.4.17",
+  "postcss": "^8.4.35"
+}
+```
+
+### Medical practice features
+
+Specialized libraries for medical practice management:
+
+- **@fullcalendar**: Appointment scheduling and calendar views
+- **chart.js**: Patient analytics and practice metrics
+- **react-quill**: Rich text editor for clinical notes
+- **pdfjs-dist**: PDF document viewing (lab results, reports)
+- **browser-image-compression**: Image optimization for medical imaging
+
+## Development tools
+
+### Available scripts
+
+The following npm scripts are available:
+
+```json
+{
+  "dev": "vite",                    // Start development server
+  "build": "tsc && vite build",    // Build for production
+  "lint": "eslint . --ext ts,tsx", // Run linter
+  "preview": "vite preview"        // Preview production build
+}
+```
+
+### Running scripts
+
+<CodeGroup>
+```bash Development
+npm run dev
+# Starts Vite dev server at http://localhost:5173
+```
+
+```bash Build
+npm run build
+# Compiles TypeScript and builds optimized production bundle
+```
+
+```bash Lint
+npm run lint
+# Checks code quality and enforces coding standards
+```
+
+```bash Preview
+npm run preview
+# Serves the production build locally for testing
+```
+</CodeGroup>
+
+## Build configuration
+
+DoctorSoft+ uses a custom Vite configuration for optimal performance:
+
+```typescript
+// vite.config.ts - Environment validation
+const requiredEnvVars = [
+  { name: 'VITE_SUPABASE_URL', required: true },
+  { name: 'VITE_SUPABASE_ANON_KEY', required: true },
+  { name: 'VITE_MAX_FILE_SIZE_MB', required: false, default: '10' },
+  { name: 'VITE_BUCKET_NAME', required: false, default: '00000000-default-bucket' }
+];
+```
+
+<Warning>
+The build process validates environment variables at build time. Missing required variables will cause the build to fail with a clear error message.
+</Warning>
+
+### Code splitting strategy
+
+The application uses intelligent code splitting to optimize load times:
+
+- **vendor-react**: Core React libraries
+- **vendor-supabase**: Supabase client
+- **vendor-router**: React Router
+- **vendor-forms**: Form handling (react-hook-form, zod)
+- **vendor-editor**: Rich text editor (lazy loaded)
+- **vendor-calendar**: Calendar component (lazy loaded)
+- **vendor-charts**: Analytics charts (lazy loaded)
+
+## Troubleshooting
+
+### npm install fails
+
+If `npm install` fails:
+
+1. Clear npm cache: `npm cache clean --force`
+2. Delete `node_modules` and `package-lock.json`
+3. Run `npm install` again
+
+### TypeScript errors
+
+If you see TypeScript errors:
+
+1. Ensure you're using TypeScript 5.2+: `npx tsc --version`
+2. Clear TypeScript cache: Delete the `.tsbuildinfo` file
+3. Restart your IDE
+
+### Vite port conflict
+
+If port 5173 is in use, Vite will automatically use the next available port. Check the terminal output for the actual URL.
+
+## Next steps
+
+After installation:
+
+1. [Configure environment variables](/configuration) for Supabase
+2. Follow the [quickstart guide](/quickstart) to create your first user
+3. Learn about [deployment options](/deployment/overview) for production

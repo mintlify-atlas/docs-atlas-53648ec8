@@ -1,0 +1,263 @@
+---
+title: Supabase setup
+description: Configure your Supabase project for DoctorSoft+ including authentication, storage, and database setup
+---
+
+This guide walks you through setting up a Supabase project for DoctorSoft+, configuring authentication, storage buckets, and environment variables.
+
+## Prerequisites
+
+- A Supabase account (sign up at [supabase.com](https://supabase.com))
+- Node.js 18 or higher installed locally
+- Access to your deployment platform (Netlify, Vercel, etc.)
+
+## Create a Supabase project
+
+<Steps>
+  <Step title="Create new project">
+    1. Log in to your [Supabase Dashboard](https://app.supabase.com)
+    2. Click "New Project"
+    3. Enter your project details:
+       - **Name**: DoctorSoft Production (or your preferred name)
+       - **Database Password**: Generate a strong password and save it securely
+       - **Region**: Choose the region closest to your users
+       - **Pricing Plan**: Select based on your needs
+    4. Click "Create new project"
+
+    <Note>
+      Project creation takes 2-3 minutes. You'll receive an email when it's ready.
+    </Note>
+  </Step>
+
+  <Step title="Get your project credentials">
+    Once your project is ready, navigate to **Settings > API** to find:
+
+    - **Project URL**: Your `VITE_SUPABASE_URL`
+    - **Project API keys > anon public**: Your `VITE_SUPABASE_ANON_KEY`
+
+    <Warning>
+      Never commit these credentials to your repository. Always use environment variables.
+    </Warning>
+  </Step>
+</Steps>
+
+## Configure authentication
+
+DoctorSoft+ uses Supabase Auth with email/password authentication and PKCE flow for enhanced security.
+
+<Steps>
+  <Step title="Enable email authentication">
+    1. Go to **Authentication > Providers** in your Supabase dashboard
+    2. Ensure **Email** provider is enabled
+    3. Configure email settings:
+       - **Enable email confirmations**: Recommended for production
+       - **Secure email change**: Enable to require verification
+       - **Disable email signups**: Configure based on your user management strategy
+  </Step>
+
+  <Step title="Configure auth settings">
+    In **Authentication > Settings**, configure:
+
+    - **Site URL**: Your production application URL (e.g., `https://doctorsoft.app`)
+    - **Redirect URLs**: Add allowed callback URLs for your application
+    - **JWT expiry**: Default is 3600 seconds (1 hour)
+    - **Refresh token rotation**: Enable for better security
+
+    The client configuration automatically handles PKCE flow:
+
+    ```typescript
+    auth: {
+      autoRefreshToken: true,
+      detectSessionInUrl: detectSessionInUrlFlag, // Configurable via env
+      storage: customStorage,
+      storageKey: 'supabase.auth.session',
+      persistSession: true,
+      flowType: 'pkce' // Enhanced security flow
+    }
+    ```
+  </Step>
+
+  <Step title="Session management">
+    DoctorSoft+ implements automatic session refresh and expiration handling:
+
+    - Sessions are stored in `localStorage` with SSR-safe fallbacks
+    - Tokens are automatically refreshed when nearing expiration (60 seconds)
+    - Custom timeout of 15 seconds for all Supabase requests
+
+    See `~/workspace/source/src/lib/supabaseUtils.ts:4-62` for session validation logic.
+  </Step>
+</Steps>
+
+## Set up storage buckets
+
+DoctorSoft+ uses Supabase Storage for patient documents, medical images, and other files.
+
+<Steps>
+  <Step title="Create storage bucket">
+    1. Navigate to **Storage** in your Supabase dashboard
+    2. Click "Create a new bucket"
+    3. Configure the bucket:
+       - **Name**: `00000000-default-bucket` (or your preferred bucket name)
+       - **Public bucket**: Disable (patient data must be private)
+       - **File size limit**: 10 MB (configurable via `VITE_MAX_FILE_SIZE_MB`)
+       - **Allowed MIME types**: Configure based on your needs (images, PDFs, etc.)
+  </Step>
+
+  <Step title="Configure bucket policies">
+    Add Row Level Security (RLS) policies for the bucket:
+
+    ```sql
+    -- Allow authenticated users to upload files
+    CREATE POLICY "Authenticated users can upload files"
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = '00000000-default-bucket');
+
+    -- Allow users to read files from their business unit
+    CREATE POLICY "Users can read files from their BU"
+    ON storage.objects FOR SELECT
+    TO authenticated
+    USING (bucket_id = '00000000-default-bucket');
+
+    -- Allow users to delete their own files
+    CREATE POLICY "Users can delete their own files"
+    ON storage.objects FOR DELETE
+    TO authenticated
+    USING (bucket_id = '00000000-default-bucket' AND owner = auth.uid());
+    ```
+  </Step>
+</Steps>
+
+## Configure environment variables
+
+Set up environment variables for your application.
+
+### Local development
+
+Create a `.env` file in your project root:
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAX_FILE_SIZE_MB=10
+VITE_BUCKET_NAME=00000000-default-bucket
+VITE_APP_VERSION=1.0.0
+VITE_SUPABASE_DETECT_SESSION_IN_URL=false
+```
+
+<Note>
+  `VITE_SUPABASE_DETECT_SESSION_IN_URL` is disabled by default for better performance. Enable it only if you're using OAuth providers.
+</Note>
+
+### Production deployment
+
+Add these environment variables to your deployment platform:
+
+<CodeGroup>
+```bash Netlify
+# Navigate to: Site Settings > Build & Deploy > Environment
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAX_FILE_SIZE_MB=10
+VITE_BUCKET_NAME=00000000-default-bucket
+VITE_APP_VERSION=1.0.0
+```
+
+```bash Vercel
+# Navigate to: Project Settings > Environment Variables
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_MAX_FILE_SIZE_MB=10
+VITE_BUCKET_NAME=00000000-default-bucket
+VITE_APP_VERSION=1.0.0
+```
+</CodeGroup>
+
+## Client configuration
+
+The Supabase client is configured in `~/workspace/source/src/supabase.ts` with the following features:
+
+### Singleton pattern
+
+The client uses a singleton pattern to prevent multiple instances in development:
+
+```typescript
+function getSupabaseClient(): SupabaseClient<Database> {
+  if (import.meta.env.DEV && isBrowser && window._supabaseClient) {
+    return window._supabaseClient;
+  }
+  // Create and cache client...
+}
+```
+
+### Custom fetch with timeout
+
+All requests include a 15-second timeout with detailed error messages:
+
+```typescript
+const fetchWithTimeout = (url: string, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  // Fetch with abort signal...
+};
+```
+
+### SSR-safe storage
+
+Custom storage implementation handles server-side rendering gracefully:
+
+```typescript
+const customStorage = {
+  getItem: (key: string) => {
+    try {
+      if (!isBrowser) return null;
+      return localStorage.getItem(key);
+    } catch (err) {
+      console.error('Error al acceder a localStorage:', err);
+      return null;
+    }
+  },
+  // setItem and removeItem...
+};
+```
+
+## Verify your setup
+
+After configuration, verify everything works:
+
+<Steps>
+  <Step title="Test database connection">
+    Run a simple query in the Supabase SQL Editor:
+
+    ```sql
+    SELECT * FROM tcCitasEstados LIMIT 5;
+    ```
+
+    You should see appointment status records if migrations have been applied.
+  </Step>
+
+  <Step title="Test authentication">
+    1. Start your development server: `npm run dev`
+    2. Navigate to the login page
+    3. Create a test user account
+    4. Verify you can log in and access protected routes
+  </Step>
+
+  <Step title="Test storage">
+    1. Log in to your application
+    2. Navigate to a patient record
+    3. Try uploading a test document
+    4. Verify the file appears in **Storage** in your Supabase dashboard
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Database migrations" icon="database" href="/deployment/database-migrations">
+    Learn how to apply and manage database schema changes
+  </Card>
+  <Card title="Security policies" icon="shield" href="/deployment/security">
+    Understand RLS policies and authentication security
+  </Card>
+</CardGroup>

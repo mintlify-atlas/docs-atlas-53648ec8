@@ -1,0 +1,251 @@
+---
+title: Pathological history
+description: Document chronic diseases, surgeries, allergies, and medications with advanced cataloging
+---
+
+The **Pathological History** (Antecedentes Patológicos) module allows you to document the patient's personal medical history, including chronic diseases, surgical history, allergies, immunizations, and current medications. This dedicated module features integration with the pathology catalog and an intuitive tabbed interface.
+
+## Overview
+
+The Pathological History form is organized into four main tabs:
+
+1. **Chronic diseases** (Enfermedades Crónicas)
+2. **Surgical history** (Historial Quirúrgico)
+3. **Allergies and immunizations** (Alergias e Inmunizaciones)
+4. **Medications and notes** (Medicamentos y Notas)
+
+<Note>
+This module integrates with the **Pathology Catalog** in Settings, allowing you to select from active pathologies or add custom entries.
+</Note>
+
+## Tab 1: Chronic diseases
+
+### Selecting from the catalog
+
+The system displays all active pathologies from your catalog. Pathologies are:
+- Filtered by patient sex (male/female/indistinct)
+- Displayed as clickable tags
+- Auto-sorted with selected pathologies appearing first
+
+<Steps>
+  <Step title="View available pathologies">
+    All active pathologies matching the patient's sex are displayed as interactive buttons.
+  </Step>
+  
+  <Step title="Select a pathology">
+    Click on a pathology name to select it. Selected pathologies are highlighted with the primary theme color.
+  </Step>
+  
+  <Step title="Deselect if needed">
+    Click a selected pathology again to remove it from the patient's record.
+  </Step>
+</Steps>
+
+### Adding custom pathologies
+
+For conditions not in your catalog:
+
+1. Enter the pathology name in the text field
+2. Click the **+** button or press **Enter**
+3. The custom pathology appears as a tag with an **×** button for removal
+
+<Info>
+Custom pathologies are patient-specific and do not automatically add to your global catalog.
+</Info>
+
+### Other chronic diseases field
+
+Use the free-text "Otras enfermedades crónicas" field to describe:
+- Complex conditions requiring detailed explanation
+- Rare diseases not suitable for catalog tags
+- Additional context about listed conditions
+
+## Tab 2: Surgical history
+
+Document all previous surgeries with a modern tag-based interface.
+
+### Adding surgeries
+
+<Steps>
+  <Step title="Enter surgery details">
+    Type the surgery name and relevant details in the input field (e.g., "Apendicectomía (2020)", "Colecistectomía laparoscópica").
+  </Step>
+  
+  <Step title="Add to list">
+    Press **Enter** or click the **+** button to add the surgery.
+  </Step>
+  
+  <Step title="Review surgeries">
+    Each surgery appears as a tag with a colored background and an **×** removal button.
+  </Step>
+</Steps>
+
+**Surgery tags** are displayed with:
+- Primary color background (15% opacity)
+- Primary color text
+- Border with 30% opacity
+- Hover shadow effect
+- One-click removal via **×** button
+
+### Hospitalizations
+
+Similar to surgeries, document previous hospital stays:
+
+1. Enter reason and details (e.g., "Neumonía (2019)", "Infarto agudo al miocardio (2021)")
+2. Press **Enter** or click **+**
+3. Entries appear as tags with secondary color styling
+4. Remove with the **×** button
+
+## Tab 3: Allergies and immunizations
+
+### Medication and substance allergies
+
+Document allergies to:
+- Medications (penicillin, NSAIDs, etc.)
+- Materials (latex, metals)
+- Anesthetics
+- Other substances
+
+Use the multi-line text area to provide detailed allergy information.
+
+### Transfusion history
+
+Record:
+- Dates of blood transfusions
+- Reasons for transfusion
+- Any adverse reactions experienced
+
+### Immunization status
+
+Select from:
+- **Esquema completo** (Complete)
+- **Esquema incompleto** (Incomplete)
+- **Desconocido** (Unknown)
+- **No aplica** (N/A)
+
+### Immunization details
+
+Provide specifics about:
+- Vaccines received
+- Dates administered
+- Pending or recommended vaccines
+- Booster schedule
+
+## Tab 4: Medications and notes
+
+### Current medications
+
+Document all medications the patient currently takes:
+- Medication name
+- Dosage (e.g., "500mg")
+- Frequency (e.g., "twice daily")
+- Duration (if applicable)
+
+**Format example:**
+```
+Metformin 500mg - 2 times daily with meals
+Lisinopril 10mg - 1 time daily in the morning
+Aspirin 100mg - 1 time daily
+```
+
+### General notes
+
+Use this field for:
+- Additional relevant medical history
+- Context for recorded conditions
+- Patient-specific considerations
+- Links between different pathologies
+
+## Summary section
+
+At the bottom of the form, a dynamic summary displays:
+- **Number of chronic diseases** (red badge)
+- **Number of surgeries** (primary color badge)
+- **Number of hospitalizations** (primary color badge)
+- **Allergies registered** (yellow badge)
+- **Immunization status** (green badge)
+
+<Info>
+The summary updates in real-time as you enter data, providing an at-a-glance overview.
+</Info>
+
+## Pathology catalog integration
+
+The module uses React Query to fetch active pathologies from the catalog:
+
+```typescript
+const { data: activePatologiesData, isLoading, error } = useQuery<AppPatology[]>({
+  queryKey: ['activePatologies'],
+  queryFn: () => api.patologies.getAllActive(),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+});
+```
+
+Pathologies are filtered by:
+- **Active status**: Only active pathologies appear
+- **Patient sex**: Male-specific conditions don't show for female patients (and vice versa)
+- **Indistinct**: Pathologies marked "Indistinto" appear for all patients
+
+### Managing the catalog
+
+To add or edit pathologies:
+1. Navigate to **Settings** → **Pathology Catalog**
+2. Add new pathologies with name, specialty, and sex classification
+3. Activate/deactivate pathologies as needed
+4. Changes reflect immediately in patient records
+
+## Printing reports
+
+Click the **"Imprimir Informe"** button to generate a formatted pathological history report including:
+- Patient identification
+- All chronic diseases (from catalog and custom)
+- Surgical history
+- Hospitalizations
+- Allergies and immunizations
+- Current medications
+- General notes
+
+## Data persistence
+
+<Warning>
+The system auto-detects whether to create a new record or update an existing one based on `patient_id`. Always save your changes before navigating away.
+</Warning>
+
+Save behavior:
+- **New record**: Creates entry if no pathological history exists for patient
+- **Update**: Modifies existing record if found
+- **Validation**: Ensures all data meets schema requirements before saving
+
+## Best practices
+
+### Chronic disease documentation
+- Select all applicable conditions from the catalog
+- Add custom entries for rare or specific diagnoses
+- Use "Otras enfermedades crónicas" for complex descriptions
+- Update regularly as patient's condition evolves
+
+### Surgical and hospitalization history
+- Include approximate dates when exact dates unknown
+- Note significant complications or outcomes
+- Be specific about procedure types
+- Record multiple surgeries/stays separately
+
+### Allergy management
+- Document severity of allergic reactions
+- Include cross-allergies (e.g., penicillin family)
+- Update immediately when new allergies discovered
+- Verify allergy status at each visit
+
+## Source code reference
+
+Implemented in:
+- `/workspace/source/src/pages/PathologicalHistory.tsx` - Main component (963 lines)
+- Uses React Hook Form with Zod validation
+- Integrates with pathology catalog via API
+- Tab-based navigation with Heart, Stethoscope, AlertCircle, and Pill icons
+
+Key features:
+- Dynamic pathology loading from catalog
+- Tag-based UI for surgeries and hospitalizations
+- Real-time summary calculation
+- Sex-based pathology filtering

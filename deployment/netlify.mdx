@@ -1,0 +1,288 @@
+---
+title: Deploy to Netlify
+description: Step-by-step guide to deploy DoctorSoft+ on Netlify with continuous deployment
+---
+
+Netlify provides a simple deployment platform with automatic builds from Git, global CDN, and instant rollbacks. This guide walks through deploying DoctorSoft+ to Netlify.
+
+## Prerequisites
+
+Before deploying to Netlify, ensure you have:
+
+- A Netlify account ([sign up for free](https://app.netlify.com/signup))
+- Your code in a Git repository (GitHub, GitLab, or Bitbucket)
+- Supabase project URL and anon key
+- All required environment variables ready
+
+## Deployment steps
+
+<Steps>
+  <Step title="Connect your repository">
+    1. Log in to [Netlify](https://app.netlify.com/)
+    2. Click "Add new site" > "Import an existing project"
+    3. Choose your Git provider (GitHub, GitLab, or Bitbucket)
+    4. Authorize Netlify to access your repositories
+    5. Select the DoctorSoft+ repository
+  </Step>
+
+  <Step title="Configure build settings">
+    On the build settings page, configure the following:
+
+    | Setting | Value |
+    |---------|-------|
+    | Branch to deploy | `main` (or your primary branch) |
+    | Build command | `npm run build` |
+    | Publish directory | `dist` |
+    | Node version | 18 or higher |
+
+    <Note>
+      Netlify will automatically detect that this is a Vite project and may pre-fill these settings.
+    </Note>
+  </Step>
+
+  <Step title="Add environment variables">
+    Before deploying, add all required environment variables:
+
+    1. In the deployment configuration screen, scroll to "Environment variables"
+    2. Click "Add environment variables"
+    3. Add the following required variables:
+
+    ```bash
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-anon-key-here
+    VITE_MAX_FILE_SIZE_MB=10
+    VITE_BUCKET_NAME=your-bucket-name
+    ```
+
+    <Warning>
+      The build will fail if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are not set.
+    </Warning>
+  </Step>
+
+  <Step title="Deploy">
+    1. Click "Deploy site"
+    2. Netlify will clone your repository and start the build process
+    3. Monitor the build logs for any errors
+    4. Once complete, your site will be live at a Netlify subdomain (e.g., `random-name-123.netlify.app`)
+  </Step>
+
+  <Step title="Configure custom domain (optional)">
+    To use a custom domain:
+
+    1. Go to Site Settings > Domain management
+    2. Click "Add custom domain"
+    3. Enter your domain name
+    4. Follow the instructions to update your DNS settings
+    5. Netlify will automatically provision an SSL certificate
+  </Step>
+</Steps>
+
+## Environment variable configuration
+
+If you need to add or update environment variables after deployment:
+
+<Steps>
+  <Step title="Navigate to environment settings">
+    1. Go to your site in the Netlify dashboard
+    2. Click "Site settings"
+    3. Navigate to "Build & deploy" > "Environment"
+  </Step>
+
+  <Step title="Add or edit variables">
+    1. Click "Add a variable" or "Edit" next to an existing variable
+    2. Enter the variable name and value
+    3. Click "Save"
+  </Step>
+
+  <Step title="Trigger a redeploy">
+    Environment variable changes require a new deployment:
+
+    1. Go to the "Deploys" tab
+    2. Click "Trigger deploy" > "Deploy site"
+    
+    Alternatively, push a new commit to trigger an automatic deployment.
+  </Step>
+</Steps>
+
+## SPA routing configuration
+
+DoctorSoft+ is a single-page application (SPA) that uses client-side routing. Netlify needs to redirect all requests to `index.html` to handle routes properly.
+
+<Note>
+  The build process automatically generates a `_redirects` file in the `dist` folder to handle SPA routing.
+</Note>
+
+If you encounter 404 errors on routes, verify that the `_redirects` file exists in your `dist` folder after building:
+
+```bash
+# _redirects
+/*    /index.html   200
+```
+
+## Build settings via netlify.toml
+
+For more control, you can create a `netlify.toml` file in your repository root:
+
+<CodeGroup>
+```toml netlify.toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+```
+</CodeGroup>
+
+<Note>
+  Environment variables should still be configured in the Netlify dashboard, not in `netlify.toml`, as this file is committed to version control.
+</Note>
+
+## Continuous deployment
+
+Netlify automatically deploys your site whenever you push to your configured branch:
+
+1. **Automatic builds:** Every push to the main branch triggers a new deployment
+2. **Deploy previews:** Pull requests generate preview deployments with unique URLs
+3. **Build notifications:** Get notified via email or Slack when deployments succeed or fail
+
+### Configure deploy contexts
+
+You can set different environment variables for production and deploy previews:
+
+1. Go to Site Settings > Build & Deploy > Environment
+2. Click on an environment variable
+3. Select which contexts it applies to:
+   - Production
+   - Deploy Previews
+   - Branch deploys
+
+## Monitoring and logs
+
+### Build logs
+
+To view build logs:
+
+1. Go to the "Deploys" tab
+2. Click on any deployment
+3. View the full build log
+
+### Function logs (if using Netlify Functions)
+
+If you add Netlify Functions later:
+
+1. Go to the "Functions" tab
+2. Click on a function to view logs
+3. Monitor real-time invocations and errors
+
+## Troubleshooting
+
+### Build fails with "Command failed with exit code 1"
+
+**Common causes:**
+- Missing environment variables
+- TypeScript errors in code
+- Dependency installation failures
+
+**Solutions:**
+1. Check the build logs for specific error messages
+2. Verify all required environment variables are set
+3. Ensure `package.json` and `package-lock.json` are committed
+4. Try building locally: `npm run build`
+
+### Blank page after deployment
+
+**Common causes:**
+- Missing `_redirects` file
+- Environment variables not set
+- JavaScript errors in production build
+
+**Solutions:**
+1. Check browser console for errors
+2. Verify environment variables in Site Settings
+3. Ensure `_redirects` file is in the `dist` folder
+4. Test production build locally: `npm run build && npm run preview`
+
+### 404 errors on routes
+
+**Common causes:**
+- SPA redirects not configured
+- Missing `_redirects` file
+
+**Solutions:**
+1. Verify `_redirects` file exists in `dist` folder with content: `/*    /index.html   200`
+2. Add redirect configuration to `netlify.toml` (see above)
+3. Clear Netlify cache and redeploy
+
+### Environment variables not working
+
+**Common causes:**
+- Variables set for wrong deploy context
+- Forgot to redeploy after adding variables
+- Variable names missing `VITE_` prefix
+
+**Solutions:**
+1. Verify variables are set for the correct context (Production/Preview)
+2. Trigger a new deployment after adding variables
+3. Ensure all variables start with `VITE_`
+4. Check build logs for environment variable warnings
+
+## Performance optimization
+
+Netlify automatically provides:
+
+- **Global CDN:** Assets served from edge locations worldwide
+- **Asset optimization:** Automatic image optimization (with Netlify Pro)
+- **HTTP/2:** Modern protocol for faster loading
+- **Gzip/Brotli compression:** Automatic compression of text assets
+
+### Additional optimizations
+
+1. **Enable asset optimization** (Netlify Pro):
+   - Go to Site Settings > Build & deploy > Post processing
+   - Enable "Bundle CSS" and "Minify JS and CSS"
+
+2. **Configure caching headers** via `netlify.toml`:
+   ```toml
+   [[headers]]
+     for = "/assets/*"
+     [headers.values]
+       Cache-Control = "public, max-age=31536000, immutable"
+   ```
+
+3. **Enable Netlify Analytics** to monitor performance:
+   - Go to Site Settings > Analytics
+   - Enable Netlify Analytics
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/deployment/environment-variables">
+    Learn about all available environment variables
+  </Card>
+  
+  <Card title="Deployment Overview" icon="rocket" href="/deployment/overview">
+    Back to deployment overview
+  </Card>
+  
+  <Card title="Netlify Documentation" icon="book" href="https://docs.netlify.com/">
+    Official Netlify documentation
+  </Card>
+  
+  <Card title="Custom Domains" icon="globe" href="https://docs.netlify.com/domains-https/custom-domains/">
+    Configure custom domains and SSL
+  </Card>
+</CardGroup>

@@ -1,0 +1,131 @@
+---
+title: Clinical evolution
+description: Track patient progress with timestamped clinical evolution notes
+---
+
+The **Clinical Evolution** module allows healthcare providers to document the patient's progress over time through chronological clinical notes. Each entry is automatically timestamped and permanently recorded for complete medical history tracking.
+
+## Overview
+
+Clinical evolution notes are essential for:
+- Documenting patient progress during treatment
+- Recording observations from follow-up visits
+- Tracking response to interventions
+- Maintaining a chronological medical history
+- Supporting clinical decision-making
+
+<Note>
+All evolution entries are automatically timestamped with the exact date and time of creation and cannot be modified once saved.
+</Note>
+
+## Creating evolution notes
+
+<Steps>
+  <Step title="Select a patient">
+    Navigate to the Patients section and select the patient you want to document. You must have an active patient selected to access Clinical Evolution.
+  </Step>
+  
+  <Step title="Access clinical evolution">
+    From the main menu, click on **Clinical Evolution** under the Medical Records section.
+  </Step>
+  
+  <Step title="Enter evolution text">
+    Use the rich text editor to document:
+    - Current patient status
+    - Clinical observations
+    - Changes in symptoms
+    - Response to treatment
+    - New findings or concerns
+    - Plan adjustments
+  </Step>
+  
+  <Step title="Save the entry">
+    Click **Agregar Entrada** (Add Entry) to permanently save the note. The entry will be timestamped and added to the patient's history.
+  </Step>
+</Steps>
+
+## Rich text formatting
+
+The clinical evolution editor supports rich text formatting including:
+
+- **Bold** and *italic* text
+- Bullet and numbered lists
+- Text alignment
+- Headings and subheadings
+- Font size adjustments
+
+This allows you to create well-organized, readable notes that highlight important information.
+
+## Viewing evolution history
+
+<Info>
+Evolution entries are displayed in reverse chronological order, with the most recent notes appearing first.
+</Info>
+
+Each evolution entry displays:
+- **Date and time**: Exact timestamp of when the note was created (format: DD/MM/YYYY HH:MM)
+- **Content**: The full evolution text with preserved formatting
+- **Entry count**: Total number of evolution records for the patient
+
+The system automatically sorts all entries from newest to oldest, making it easy to track the patient's most recent status.
+
+## Clinical workflow
+
+### During consultations
+
+1. Open the patient's clinical evolution before or during the appointment
+2. Review previous evolution notes to understand recent history
+3. Document findings and observations from the current visit
+4. Record any changes to the treatment plan
+5. Save the entry before ending the consultation
+
+### Follow-up visits
+
+For follow-up appointments:
+- Review the previous evolution entry to track progress
+- Compare current status with previous visits
+- Document improvements or deteriorations
+- Adjust treatment plans based on evolution
+
+## Best practices
+
+<Warning>
+Clinical evolution notes are permanent medical records. Ensure accuracy and completeness before saving each entry.
+</Warning>
+
+### Writing effective evolution notes
+
+- **Be specific**: Include measurable observations and objective data
+- **Use medical terminology**: Maintain professional clinical language
+- **Document changes**: Note any variations from previous status
+- **Include assessments**: Provide your clinical interpretation
+- **State the plan**: Document next steps and follow-up requirements
+
+### SOAP format recommendation
+
+Consider organizing your notes using the SOAP format:
+
+- **S (Subjective)**: Patient's reported symptoms and concerns
+- **O (Objective)**: Observable findings, vital signs, examination results
+- **A (Assessment)**: Your clinical interpretation and diagnosis
+- **P (Plan)**: Treatment plan, prescriptions, follow-up instructions
+
+## Integration with other records
+
+Clinical evolution notes complement other medical records:
+
+- **Clinical History**: Provides background context for evolution entries
+- **Pathological History**: Reference chronic conditions in evolution notes
+- **Prescriptions**: Document medication changes and responses
+- **Lab Results**: Record and interpret test findings
+
+## Source code reference
+
+The Clinical Evolution module is implemented in:
+- `/workspace/source/src/pages/ClinicalEvolution.tsx` - Main component
+- API endpoint: `api.clinicalEvolution.getByPatientId()` and `api.clinicalEvolution.create()`
+
+Key fields stored:
+- `patient_id`: Links evolution to specific patient
+- `evolution_text`: Rich text content of the note
+- `created_at`: Automatic timestamp

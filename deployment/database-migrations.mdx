@@ -1,0 +1,379 @@
+---
+title: Database migrations
+description: Apply and manage database schema changes for DoctorSoft+ using Supabase migrations
+---
+
+DoctorSoft+ uses SQL migration files to manage database schema changes. This guide explains how to apply migrations, understand the schema structure, and create new migrations.
+
+## Migration structure
+
+Migrations are located in `~/workspace/source/supabase/migrations/` and follow a timestamp-based naming convention:
+
+```
+20251011221742_seed_vital_signs_catalog_data.sql
+20251002182941_create_appointment_statuses_table.sql
+20250517183112_peaceful_mountain.sql
+```
+
+Each migration file:
+- Has a unique timestamp prefix (YYYYMMDDHHMMSS)
+- Contains a descriptive name separated by underscores
+- Includes SQL statements to modify the schema
+- Documents changes with comments at the top
+
+## Apply migrations
+
+There are multiple ways to apply migrations to your Supabase project.
+
+### Using Supabase CLI
+
+<Steps>
+  <Step title="Install Supabase CLI">
+    ```bash
+    npm install -g supabase
+    ```
+  </Step>
+
+  <Step title="Login to Supabase">
+    ```bash
+    supabase login
+    ```
+  </Step>
+
+  <Step title="Link your project">
+    ```bash
+    supabase link --project-ref your-project-ref
+    ```
+
+    <Note>
+      Find your project ref in the Supabase dashboard URL: `https://app.supabase.com/project/[project-ref]`
+    </Note>
+  </Step>
+
+  <Step title="Apply migrations">
+    ```bash
+    supabase db push
+    ```
+
+    This applies all migrations in the `supabase/migrations/` directory that haven't been applied yet.
+  </Step>
+</Steps>
+
+### Using SQL Editor
+
+<Steps>
+  <Step title="Open SQL Editor">
+    Navigate to **SQL Editor** in your Supabase dashboard.
+  </Step>
+
+  <Step title="Copy migration content">
+    Open a migration file from `supabase/migrations/` and copy its contents.
+  </Step>
+
+  <Step title="Execute SQL">
+    Paste the SQL into the editor and click **Run**.
+
+    <Warning>
+      Apply migrations in chronological order (oldest to newest) to avoid dependency issues.
+    </Warning>
+  </Step>
+
+  <Step title="Verify execution">
+    Check the output panel for any errors. Successful execution will show "Success. No rows returned".
+  </Step>
+</Steps>
+
+## Database schema overview
+
+DoctorSoft+ uses a comprehensive schema for medical practice management. Here are the main table groups:
+
+### Core patient tables
+
+- **tcPacientes**: Patient demographic and contact information
+- **tpPacienteHistPatologica**: Pathological medical history
+- **tpPacienteHistNoPatol**: Non-pathological history (lifestyle, social)
+- **tpFcHeredoFamiliar**: Family hereditary history
+- **tpDocPaciente**: Patient document attachments
+
+### Clinical records
+
+- **clinical_histories**: Patient clinical history text
+- **clinical_evolution**: Clinical evolution notes over time
+- **medical_records**: Visit records with diagnosis and treatment
+- **somatometry_records**: Height, weight, BMI measurements
+- **tpSignosVitales**: Vital signs measurements (blood pressure, temperature, etc.)
+- **tcSignosVitales**: Vital signs catalog (reference ranges by age/sex)
+
+### Appointments
+
+- **tcCitas**: Appointment scheduling and details
+- **tcCitasEstados**: Appointment status catalog (17 different statuses)
+- **tcCitasEdoTrans**: Allowed status transitions
+- **tcAgendaSettings**: Schedule configuration (hours, days, intervals)
+- **tcAgendaBloqueada**: Blocked time periods
+- **tcConsultorios**: Office/room catalog
+
+### Prescriptions and medications
+
+- **prescriptions**: Prescription header information
+- **prescription_medications**: Individual medications per prescription
+- **medications**: Medication catalog with dosage and contraindications
+- **tcPatologias**: Pathology/diagnosis catalog (CIE-10 codes)
+
+### System and configuration
+
+- **tcCodigosPostales**: Mexican postal code catalog
+- **tcUsuarios**: User accounts and permissions
+- **tcBu**: Business units (multi-tenant support)
+- **tcActividadReciente**: Activity tracking for audit logs
+
+## Key migrations explained
+
+### Appointment status system
+
+The appointment lifecycle is managed through a sophisticated status system:
+
+```sql
+-- From: 20251002182941_create_appointment_statuses_table.sql
+CREATE TABLE "tcCitasEstados" (
+  id smallint PRIMARY KEY,
+  estado text NOT NULL,
+  descripcion text NOT NULL,
+  usocita text NOT NULL,
+  color varchar(7)
+);
+```
+
+**17 appointment statuses** cover the complete lifecycle:
+- **0 - Solicitada**: Online/phone request (waiting list)
+- **1 - Programada**: Scheduled in calendar
+- **2 - Confirmada**: Patient confirmed
+- **3 - En Espera**: Patient arrived and waiting
+- **4 - En Progreso**: Consultation in progress
+- **5 - Atendida**: Consultation completed
+- **6-8**: No-show and cancellations
+- **9-10**: Rescheduling
+- **11 - Urgencia**: Emergency appointment
+- **12-14**: Billing states
+- **15 - Cerrada**: Final archived state
+- **16**: Patient left without service
+
+See the full status catalog in `20251002182941_create_appointment_statuses_table.sql:59-77`.
+
+### RLS policies for multi-tenancy
+
+All tables implement Row Level Security (RLS) to ensure business unit isolation:
+
+```sql
+-- Example from vital signs catalog
+CREATE POLICY "Users can view vital signs from their BU"
+  ON "tcSignosVitales"
+  FOR SELECT
+  TO authenticated
+  USING (
+    idbu = (
+      SELECT idbu FROM "tcUsuarios" 
+      WHERE idusuario = auth.uid()
+    )
+  );
+```
+
+This pattern ensures users only access data from their business unit.
+
+### Activity tracking
+
+The system tracks all user actions for audit compliance:
+
+```sql
+-- From: 20251003181437_create_activity_tracking_table_v2.sql
+CREATE TABLE "tcActividadReciente" (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id_usuario uuid REFERENCES auth.users(id),
+  idbu uuid NOT NULL,
+  tipo_actividad text NOT NULL,
+  descripcion text,
+  metadata jsonb,
+  ip_address inet,
+  created_at timestamptz DEFAULT now()
+);
+```
+
+Activities are automatically logged via database triggers on key tables.
+
+### Soft deletes
+
+Many tables support soft deletion instead of hard deletion:
+
+```sql
+-- Example from patient documents
+ALTER TABLE "tpDocPaciente" ADD COLUMN deleted_at timestamptz;
+
+CREATE POLICY "Users can soft delete their records"
+  ON "tpDocPaciente"
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+```
+
+Queries filter out soft-deleted records using `WHERE deleted_at IS NULL`.
+
+## Create new migrations
+
+When you need to modify the schema:
+
+<Steps>
+  <Step title="Generate migration file">
+    Use Supabase CLI to create a new migration:
+
+    ```bash
+    supabase migration new your_migration_name
+    ```
+
+    This creates a timestamped file in `supabase/migrations/`.
+  </Step>
+
+  <Step title="Write migration SQL">
+    Add your schema changes to the migration file. Include:
+
+    ```sql
+    /*
+      # Migration Title
+
+      1. Changes
+        - List of changes made
+        - What tables are affected
+
+      2. Security
+        - RLS policies added/modified
+        - Permissions granted
+    */
+
+    -- Your SQL statements here
+    ```
+  </Step>
+
+  <Step title="Test locally">
+    Apply the migration to your local development database:
+
+    ```bash
+    supabase db reset
+    ```
+
+    This resets the database and applies all migrations from scratch.
+  </Step>
+
+  <Step title="Apply to production">
+    After testing, apply to production:
+
+    ```bash
+    supabase db push --linked
+    ```
+
+    <Warning>
+      Always test migrations locally before applying to production. Backup your production database first.
+    </Warning>
+  </Step>
+</Steps>
+
+## Best practices
+
+### Always use transactions
+
+Wrap migration statements in transactions when possible:
+
+```sql
+BEGIN;
+
+-- Your schema changes here
+ALTER TABLE "tcPacientes" ADD COLUMN new_field text;
+
+-- RLS policies
+CREATE POLICY "policy_name" ON "tcPacientes" ...
+
+COMMIT;
+```
+
+### Include rollback instructions
+
+Document how to rollback the migration:
+
+```sql
+/*
+  Rollback:
+  ALTER TABLE "tcPacientes" DROP COLUMN new_field;
+  DROP POLICY "policy_name" ON "tcPacientes";
+*/
+```
+
+### Add helpful comments
+
+Use SQL comments to document tables and columns:
+
+```sql
+COMMENT ON TABLE "tcCitasEstados" IS 
+  'Catalog table for appointment statuses.';
+
+COMMENT ON COLUMN "tcCitasEstados".id IS 
+  'Unique status identifier. Estado 0 = Solicitada.';
+```
+
+### Never modify existing migrations
+
+Once applied to production, never edit a migration file. Instead:
+1. Create a new migration to make changes
+2. Reference the original migration in comments
+3. Document why the change is needed
+
+## Troubleshooting
+
+### Migration fails with "relation already exists"
+
+This means the migration was partially applied. Options:
+
+1. **Check what exists**:
+   ```sql
+   SELECT * FROM information_schema.tables 
+   WHERE table_name = 'your_table';
+   ```
+
+2. **Add IF NOT EXISTS**:
+   ```sql
+   CREATE TABLE IF NOT EXISTS "tableName" (...);
+   ```
+
+### Policy recursion errors
+
+RLS policies that reference the same table can cause recursion. Use security definer functions:
+
+```sql
+CREATE OR REPLACE FUNCTION get_user_idbu_simple()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT idbu FROM "tcUsuarios" 
+  WHERE idusuario = auth.uid() LIMIT 1;
+$$;
+```
+
+See `20251003185652_fix_get_user_idbu_simple_function.sql` for the complete implementation.
+
+### Foreign key constraint violations
+
+Apply migrations in order. If you get constraint errors:
+
+1. Check the migration order (timestamps)
+2. Ensure referenced tables exist first
+3. Verify the foreign key columns have matching types
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Security policies" icon="shield" href="/deployment/security">
+    Learn about RLS policies and authentication
+  </Card>
+  <Card title="Supabase setup" icon="database" href="/deployment/supabase-setup">
+    Configure your Supabase project
+  </Card>
+</CardGroup>

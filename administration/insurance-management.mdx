@@ -1,0 +1,293 @@
+---
+title: Insurance management
+description: Manage insurance providers and configure insurance-related settings in DoctorSoft+
+---
+
+## Overview
+
+The insurance management module allows administrators to create and maintain a catalog of insurance providers (Aseguradoras) that are accepted at your medical practice. This catalog is used when registering patients and processing claims.
+
+<Note>
+  Insurance providers configured here will appear in patient registration forms, allowing staff to quickly assign insurance coverage to patients.
+</Note>
+
+## Accessing insurance management
+
+<Steps>
+  <Step title="Navigate to Insurance Management">
+    From the main navigation menu, select **Aseguradoras** or the insurance management option.
+  </Step>
+  <Step title="View insurance providers">
+    The system displays all registered insurance providers in a paginated table showing:
+    - Insurance company name (Aseguradora)
+    - Contact information (Contacto)
+    - Active status toggle
+    - Action buttons for editing and deletion
+  </Step>
+</Steps>
+
+## Insurance provider information
+
+Each insurance provider record contains the following fields:
+
+| Field | Description | Required |
+|-------|-------------|----------|
+| **Aseguradora** | Name of the insurance company | Yes |
+| **URL** | Website URL for the insurance provider | No |
+| **Contacto** | Contact person, phone, or email | No |
+| **Notas** | Additional notes or important information | No |
+| **Activo** | Status toggle (active/inactive) | Yes (default: active) |
+
+## Adding a new insurance provider
+
+<Steps>
+  <Step title="Click Add button">
+    In the Insurance Management page, click the **Agregar** button in the top-right corner.
+  </Step>
+  <Step title="Enter insurance details">
+    Fill in the insurance provider information:
+    - **Nombre de la Aseguradora**: Enter the full name of the insurance company (required)
+    - **URL**: Add the company's website if available
+    - **Contacto**: Enter contact information (phone number, email, or contact person)
+    - **Notas**: Add any relevant notes (coverage details, special requirements, etc.)
+  </Step>
+  <Step title="Set active status">
+    Toggle the **Activo** switch:
+    - **Green (Activo)**: Insurance provider will appear in patient forms
+    - **Gray (Inactivo)**: Insurance provider is hidden from patient forms but preserved in the system
+  </Step>
+  <Step title="Save the provider">
+    Click **Guardar** to create the insurance provider record.
+  </Step>
+</Steps>
+
+<Tip>
+  The system automatically invalidates cached insurance data when you add a new provider, ensuring patient forms immediately display the updated list.
+</Tip>
+
+## Editing insurance providers
+
+To modify an existing insurance provider:
+
+<Steps>
+  <Step title="Locate the provider">
+    Use the search bar to find the insurance provider by name.
+  </Step>
+  <Step title="Open edit form">
+    Click the pencil icon in the Actions column for the provider you want to modify.
+  </Step>
+  <Step title="Update information">
+    Modify any of the following:
+    - Insurance company name
+    - Website URL
+    - Contact information
+    - Notes
+    - Active/inactive status
+  </Step>
+  <Step title="Save changes">
+    Click **Actualizar** to save your modifications.
+  </Step>
+</Steps>
+
+<Warning>
+  Changes to insurance providers are immediately reflected in patient registration forms. Ensure information is accurate before saving.
+</Warning>
+
+## Managing insurance status
+
+### Active vs. inactive providers
+
+The active status toggle controls whether an insurance provider appears in patient forms:
+
+<CardGroup cols={2}>
+  <Card title="Active (Activo)" icon="toggle-on">
+    - Provider appears in patient registration dropdowns
+    - Can be assigned to new and existing patients
+    - Fully operational for billing and claims
+  </Card>
+  <Card title="Inactive (Inactivo)" icon="toggle-off">
+    - Provider hidden from patient forms
+    - Existing patient associations preserved
+    - Useful for discontinued partnerships
+  </Card>
+</CardGroup>
+
+### Quick status toggle
+
+You can change an insurance provider's status directly from the table:
+
+1. Locate the provider in the list
+2. Click the toggle switch in the **Estado** column
+3. The status updates immediately:
+   - **Green toggle (right position)**: Active
+   - **Gray toggle (left position)**: Inactive
+
+<Note>
+  Status changes are automatically synchronized with the patient form cache. Forms will immediately reflect the updated insurance provider list.
+</Note>
+
+## Searching insurance providers
+
+The insurance management interface includes a search feature:
+
+- Type in the search box to filter providers by name
+- Search is case-insensitive
+- Results update in real-time as you type
+- Pagination resets to page 1 when searching
+
+## Pagination
+
+The insurance provider list displays 10 providers per page:
+
+- Use **Anterior** and **Siguiente** buttons to navigate
+- View current range and total count at the bottom of the table
+- Pagination controls adjust based on search results
+
+## Deleting insurance providers
+
+<Warning>
+  Deleting an insurance provider is permanent and cannot be undone. Consider setting the provider to inactive instead.
+</Warning>
+
+To delete an insurance provider:
+
+<Steps>
+  <Step title="Click delete icon">
+    Click the trash can icon in the Actions column for the provider you want to remove.
+  </Step>
+  <Step title="Confirm deletion">
+    A confirmation modal appears with the message: "¿Está seguro de que desea eliminar esta aseguradora? Esta acción no se puede deshacer."
+  </Step>
+  <Step title="Complete deletion">
+    Click **Eliminar** to permanently delete the provider, or **Cancelar** to abort.
+  </Step>
+</Steps>
+
+<Tip>
+  **Best practice**: Set insurance providers to inactive rather than deleting them. This preserves historical data for patients who were previously covered by that provider.
+</Tip>
+
+## Business unit association
+
+Insurance providers can be associated with specific business units:
+
+- Field: `idBu` (Business Unit ID)
+- Optional association
+- Allows different locations to accept different insurance providers
+- Useful for multi-location practices with varied contracts
+
+## Integration with patient forms
+
+The insurance management module directly integrates with patient registration:
+
+### How it works
+
+1. **Active providers only**: Patient forms display only insurance providers with `Activo` status set to `true`
+2. **Real-time updates**: Changes to insurance providers automatically invalidate the form cache
+3. **Query key**: The system uses the `activeInsurances` query key for caching
+4. **Automatic refresh**: Patient forms fetch updated insurance lists when the cache is invalidated
+
+### Cache invalidation
+
+The system automatically invalidates cached insurance data when:
+
+- A new insurance provider is created
+- An existing provider is updated
+- An insurance provider is deleted
+- Provider status is toggled
+
+This ensures patient forms always display current, accurate insurance options.
+
+## Data storage
+
+Insurance provider data is stored in the `tcAseguradora` table:
+
+```sql
+Table: tcAseguradora
+- idAs (Primary Key, Text)
+- Aseguradora (Text, Required)
+- URL (Text, Optional)
+- Contacto (Text, Optional)
+- Notas (Text, Optional)
+- Activo (Boolean, Required)
+- idBu (Text, Optional - Business Unit reference)
+- updated_at (Timestamp, Auto-updated)
+```
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Complete contact info" icon="address-book">
+    Include phone numbers, email addresses, or contact person names to help staff quickly reach insurance representatives.
+  </Card>
+  <Card title="Use notes field" icon="note-sticky">
+    Document important details like coverage limitations, pre-authorization requirements, or billing procedures.
+  </Card>
+  <Card title="Regular audits" icon="clipboard-list">
+    Review insurance provider list quarterly to deactivate providers your practice no longer works with.
+  </Card>
+  <Card title="Descriptive names" icon="building-columns">
+    Use full, official insurance company names to avoid confusion (e.g., "Seguros Atlas" instead of just "Atlas").
+  </Card>
+</CardGroup>
+
+## Common use cases
+
+### Seasonal insurance changes
+
+Some practices accept different insurance providers during certain times of year:
+
+1. Set the provider to **Inactivo** when not accepting new patients with that insurance
+2. Reactivate when the contract period begins again
+3. Historical patient data remains intact
+
+### Discontinued partnerships
+
+When your practice stops accepting an insurance provider:
+
+1. Set the provider to **Inactivo** instead of deleting
+2. Add a note explaining the discontinuation date and reason
+3. Existing patients retain their insurance association for historical records
+
+### Multi-location insurance coverage
+
+For practices with multiple locations accepting different insurance:
+
+1. Create insurance provider records for each accepted company
+2. Use the `idBu` field to associate providers with specific business units
+3. Patient forms can filter insurance options based on the selected location
+
+## Troubleshooting
+
+### Insurance not appearing in patient forms
+**Issue**: Newly added insurance provider doesn't show in patient registration
+
+**Solution**: 
+- Verify the **Activo** status is enabled (green toggle)
+- Refresh the patient form page
+- Check browser console for cache invalidation confirmation
+
+### Cannot delete insurance provider
+**Issue**: Error message appears when trying to delete
+
+**Solution**:
+- Provider may be in use by existing patients
+- Set provider to **Inactivo** instead
+- Contact your database administrator if deletion is absolutely necessary
+
+### Search not working
+**Issue**: Search doesn't filter insurance providers
+
+**Solution**:
+- Ensure you're typing in the search box with the magnifying glass icon
+- Search only filters by insurance provider name (Aseguradora field)
+- Try partial matches (e.g., "Atlas" instead of full name)
+
+### "Error al cargar aseguradoras"
+**Issue**: Error message when loading insurance list
+
+**Solution**:
+- Refresh the page
+- Check your internet connection
+- Verify you have proper permissions to access insurance management
+- Contact your system administrator if error persists

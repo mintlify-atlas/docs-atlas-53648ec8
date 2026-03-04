@@ -1,0 +1,176 @@
+---
+title: User management
+description: Manage system users, roles, and permissions in DoctorSoft+
+---
+
+## Overview
+
+The user management module allows administrators to create, edit, and manage all system users. You can control user access through role-based permissions and activate or deactivate user accounts as needed.
+
+<Note>
+  Only users with the **Administrador** role can access user management features.
+</Note>
+
+## User roles
+
+DoctorSoft+ supports three primary user roles, each with different access levels:
+
+<CardGroup cols={3}>
+  <Card title="Administrador" icon="shield-halved">
+    Full system access including user management, business unit configuration, and all administrative settings.
+  </Card>
+  <Card title="Medico" icon="user-doctor">
+    Access to patient records, appointments, medical histories, and clinical documentation.
+  </Card>
+  <Card title="Recepcionista" icon="user">
+    Access to appointment scheduling, patient check-in, and basic patient information.
+  </Card>
+</CardGroup>
+
+## Accessing user management
+
+<Steps>
+  <Step title="Navigate to Users">
+    From the main navigation menu, click on **Usuarios** in the sidebar.
+  </Step>
+  <Step title="View user list">
+    The system displays all registered users in a paginated table showing:
+    - Name (Nombre)
+    - Email address
+    - Phone number (Teléfono)
+    - Assigned role (Rol)
+    - Current status (Estado)
+  </Step>
+</Steps>
+
+## Creating a new user
+
+<Steps>
+  <Step title="Click Add button">
+    In the Users page, click the **Agregar** button in the top-right corner.
+  </Step>
+  <Step title="Fill in user details">
+    Complete the form with the following required information:
+    - **Nombre**: Full name of the user
+    - **Email**: Valid email address (will be used for login)
+    - **Teléfono**: Phone number (optional)
+    - **Rol**: Select from Administrador, Médico, or Recepcionista
+    - **Estado**: Set initial status (Activo or Inactivo)
+  </Step>
+  <Step title="Save the user">
+    Click **Guardar** to create the user account.
+  </Step>
+</Steps>
+
+<Warning>
+  Ensure the email address is valid and unique. Duplicate email addresses are not allowed in the system.
+</Warning>
+
+## Editing existing users
+
+To modify user information:
+
+<Steps>
+  <Step title="Locate the user">
+    Use the search bar to find the user by name, email, or phone number.
+  </Step>
+  <Step title="Open edit form">
+    Click the edit icon (pencil) in the Actions column for the user you want to modify.
+  </Step>
+  <Step title="Update information">
+    Modify any of the following fields:
+    - Name
+    - Email
+    - Phone number
+    - Role assignment
+    - Account status
+  </Step>
+  <Step title="Save changes">
+    Click **Actualizar** to save your modifications.
+  </Step>
+</Steps>
+
+## User status management
+
+Each user account has a status that controls their access to the system:
+
+### Active status (Activo)
+- User can log in to the system
+- Has full access to features permitted by their role
+- Can perform all authorized actions
+
+### Inactive status (Inactivo)
+- User cannot log in to the system
+- Account is preserved but access is revoked
+- Useful for temporary suspensions or departures
+
+<Tip>
+  Use the **Inactivo** status instead of deleting users to maintain data integrity and audit trails.
+</Tip>
+
+## Searching and filtering users
+
+The user management interface includes a powerful search feature:
+
+- **Search by name**: Type any part of the user's name
+- **Search by email**: Enter the email address or domain
+- **Search by phone**: Enter phone number digits
+
+The search is case-insensitive and updates results in real-time as you type.
+
+## Pagination
+
+The user list displays 12 users per page. Use the pagination controls at the bottom of the table to:
+
+- Navigate to the next or previous page using **Siguiente** and **Anterior** buttons
+- View the current range of users being displayed
+- See the total number of registered users
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Role assignment" icon="user-check">
+    Assign the minimum role necessary for each user to perform their job functions. Follow the principle of least privilege.
+  </Card>
+  <Card title="Regular audits" icon="clipboard-check">
+    Review user accounts periodically to ensure only active staff members have access to the system.
+  </Card>
+  <Card title="Status vs. deletion" icon="user-slash">
+    Deactivate users instead of deleting them to preserve audit trails and historical data associations.
+  </Card>
+  <Card title="Contact information" icon="address-card">
+    Keep email addresses and phone numbers up-to-date for system notifications and password recovery.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Error: "Email already exists"
+This error occurs when trying to create a user with an email address that's already registered in the system. Each email must be unique.
+
+**Solution**: Use a different email address or check if the user already exists in the system.
+
+### Error: "Error al cargar usuarios"
+This indicates a problem connecting to the database or loading user data.
+
+**Solution**: Refresh the page. If the error persists, contact your system administrator.
+
+### Cannot edit user information
+If the edit form doesn't open or save changes:
+
+**Solution**: Verify you have Administrador role permissions. Only administrators can modify user accounts.
+
+## Data stored in tcUsuarios table
+
+The system stores the following user information:
+
+| Field | Description | Required |
+|-------|-------------|----------|
+| id | Unique user identifier | Auto-generated |
+| nombre | User's full name | Yes |
+| email | Email address (login) | Yes |
+| telefono | Phone number | No |
+| rol | User role (Administrador/Medico/Recepcionista) | Yes |
+| estado | Account status (Activo/Inactivo) | Yes |
+| fechaultimoacceso | Last login timestamp | Auto-updated |
+| updated_at | Last modification timestamp | Auto-updated |

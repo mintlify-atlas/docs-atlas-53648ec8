@@ -1,0 +1,326 @@
+---
+title: Authentication
+description: Learn how to manage user authentication, login, logout, and session handling in DoctorSoft+
+---
+
+## Overview
+
+DoctorSoft+ uses Supabase Authentication to provide secure user management with email/password authentication, session handling, and automatic token refresh.
+
+## Authentication context
+
+The authentication system is built around `AuthContext` which provides authentication state throughout the application.
+
+### Using the authentication hook
+
+```tsx
+import { useAuth } from '../contexts/AuthContext';
+
+function MyComponent() {
+  const { user, loading, signOut, error, clearError } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please log in</div>;
+  
+  return <div>Welcome, {user.nombre}!</div>;
+}
+```
+
+### Authentication state properties
+
+<Accordion title="user">
+  The current authenticated user object with extended attributes:
+  - `id`: User's unique identifier
+  - `email`: User's email address
+  - `userRole`: User's role (e.g., "Medico", "Admin")
+  - `idbu`: Business unit identifier
+  - `nombre`: User's display name
+  - `estado`: User's account status
+</Accordion>
+
+<Accordion title="loading">
+  Boolean indicating if authentication state is being loaded. Use this to show loading indicators during initial authentication check.
+</Accordion>
+
+<Accordion title="signOut">
+  Async function to log out the current user. Returns `{ error: AuthError | null }`.
+</Accordion>
+
+<Accordion title="error">
+  Current authentication error, if any. Automatically populated when authentication operations fail.
+</Accordion>
+
+<Accordion title="clearError">
+  Function to clear the current error state.
+</Accordion>
+
+## Login flow
+
+### Login form implementation
+
+The login page (`src/pages/Login.tsx`) implements a secure login form with validation:
+
+<Steps>
+  <Step title="Form validation">
+    The login form uses Zod schema validation to ensure:
+    - Email is valid format (5-50 characters)
+    - Password has minimum 8 characters
+    - Password contains uppercase, lowercase, and numbers
+  </Step>
+  
+  <Step title="Credential submission">
+    Credentials are submitted to Supabase using `signInWithPassword`:
+    
+    ```tsx
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+    ```
+  </Step>
+  
+  <Step title="Error handling">
+    The system handles common authentication errors:
+    - Email not confirmed
+    - Invalid credentials
+    - Too many login attempts
+    - Rate limiting
+  </Step>
+  
+  <Step title="Session creation">
+    Upon successful login, the AuthContext automatically:
+    - Fetches extended user information from `tcUsuarios` table
+    - Caches user data for performance
+    - Sets up automatic token refresh
+    - Redirects to the home page
+  </Step>
+</Steps>
+
+### Login error messages
+
+The system provides user-friendly error messages in Spanish:
+
+| Error Type | Message |
+|------------|----------|
+| Email not confirmed | "Por favor confirme su correo electrónico antes de iniciar sesión" |
+| Invalid credentials | "Usuario o contraseña incorrectos" |
+| Rate limited | "Demasiados intentos fallidos. Por favor espere unos minutos" |
+| Unknown error | "Error inesperado. Intente más tarde." |
+
+## Session management
+
+### Automatic token refresh
+
+The AuthContext automatically handles token refresh without blocking the UI:
+
+<Note>
+  When a token refresh occurs (`TOKEN_REFRESHED` event), the UI is **not blocked**. The system updates the session in the background while users continue working.
+</Note>
+
+```tsx
+if (event === 'TOKEN_REFRESHED') {
+  // Update session without blocking UI
+  if (isMounted && userRef.current) {
+    const finalUser = { ...session.user, ...userRef.current };
+    setUser(finalUser);
+  }
+}
+```
+
+### Session validation
+
+For sensitive operations like file uploads, validate the session first:
+
+```tsx
+const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+if (sessionError || !session) {
+  setError('Tu sesión ha expirado. Por favor, recarga la página.');
+  return;
+}
+```
+
+### Session caching
+
+User information is cached to reduce database queries:
+
+```tsx
+const extendedInfoCache = useRef<Map<string, Partial<UserWithAttributes>>>(new Map());
+
+// Check cache before querying database
+if (useCache && extendedInfoCache.current.has(userId)) {
+  return extendedInfoCache.current.get(userId);
+}
+```
+
+<Tip>
+  The cache is automatically cleared when users log out to prevent data leakage between sessions.
+</Tip>
+
+## Logout flow
+
+Implement logout functionality using the `signOut` function:
+
+```tsx
+const { signOut } = useAuth();
+
+const handleLogout = async () => {
+  const { error } = await signOut();
+  
+  if (error) {
+    console.error('Error signing out:', error);
+    // Handle error
+  }
+  // User will be automatically redirected by auth state change
+};
+```
+
+<Steps>
+  <Step title="Clear session">
+    The `signOut` function calls `supabase.auth.signOut()` to invalidate the session.
+  </Step>
+  
+  <Step title="Update state">
+    The auth state listener automatically:
+    - Sets user to `null`
+    - Clears the user info cache
+    - Updates the UI
+  </Step>
+  
+  <Step title="Redirect">
+    Your application routing should redirect unauthenticated users to the login page.
+  </Step>
+</Steps>
+
+## Password reset
+
+The login page includes a password reset link:
+
+```tsx
+<button 
+  type="button" 
+  onClick={() => navigate('/forgot-password')}
+>
+  ¿Olvidó su contraseña?
+</button>
+```
+
+<Warning>
+  Password reset functionality requires configuring email templates in your Supabase project settings.
+</Warning>
+
+## Protected routes
+
+Protect routes by checking authentication state:
+
+```tsx
+import { useAuth } from '../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+  
+  return children;
+}
+```
+
+## Remember me functionality
+
+The login form includes a "Remember me" checkbox:
+
+```tsx
+<input
+  type="checkbox"
+  {...register('rememberMe')}
+  defaultChecked={false}
+/>
+```
+
+<Note>
+  The remember me functionality stores user preferences locally. Session duration is controlled by Supabase authentication settings.
+</Note>
+
+## Best practices
+
+<Steps>
+  <Step title="Always check loading state">
+    Display loading indicators while `loading` is true to prevent UI flashing:
+    
+    ```tsx
+    if (loading) return <LoadingIndicator />;
+    ```
+  </Step>
+  
+  <Step title="Handle errors gracefully">
+    Use the `error` state to display user-friendly error messages:
+    
+    ```tsx
+    {error && (
+      <div className="error-message">
+        {error.message}
+        <button onClick={clearError}>Dismiss</button>
+      </div>
+    )}
+    ```
+  </Step>
+  
+  <Step title="Validate sessions for sensitive operations">
+    Always check session validity before file uploads, data modifications, or API calls.
+  </Step>
+  
+  <Step title="Don't block UI on token refresh">
+    Let the system handle token refresh in the background without showing loading states.
+  </Step>
+</Steps>
+
+## Common authentication patterns
+
+### Conditional rendering based on user role
+
+```tsx
+const { user } = useAuth();
+
+if (user?.userRole === 'Admin') {
+  return <AdminDashboard />;
+}
+
+return <UserDashboard />;
+```
+
+### Display user information
+
+```tsx
+const { user } = useAuth();
+
+return (
+  <div>
+    <p>Logged in as: {user?.nombre}</p>
+    <p>Business Unit: {user?.idbu}</p>
+    <p>Status: {user?.estado}</p>
+  </div>
+);
+```
+
+### Check authentication before navigation
+
+```tsx
+const navigate = useNavigate();
+const { user } = useAuth();
+
+const handleNavigation = () => {
+  if (!user) {
+    navigate('/login');
+    return;
+  }
+  
+  navigate('/protected-page');
+};
+```

@@ -1,0 +1,362 @@
+---
+title: ThemeContext
+description: Control application theming, color schemes, typography, and visual preferences
+---
+
+The `ThemeContext` manages the visual appearance of the application including theme selection, font size, and button styles. It provides 16 pre-built themes and persists user preferences to `localStorage`.
+
+## Provider
+
+### ThemeProvider
+
+Wraps your application to provide theme context to all child components.
+
+<ParamField path="children" type="React.ReactNode" required>
+  The components that will have access to theme context
+</ParamField>
+
+```tsx App.tsx
+import { ThemeProvider } from './contexts/ThemeContext';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <YourApp />
+    </ThemeProvider>
+  );
+}
+```
+
+## Hook
+
+### useTheme()
+
+Access theme state and customization methods from any component within the `ThemeProvider`.
+
+```tsx Settings.tsx
+import { useTheme } from './contexts/ThemeContext';
+
+export function Settings() {
+  const { currentTheme, setTheme, fontSize, setFontSize } = useTheme();
+
+  return (
+    <div>
+      <h1>Theme Settings</h1>
+      <p>Current theme: {currentTheme.name}</p>
+      
+      <select onChange={(e) => setTheme(e.target.value as ThemeType)}>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="professional">Professional</option>
+      </select>
+
+      <input
+        type="range"
+        min={80}
+        max={120}
+        value={fontSize}
+        onChange={(e) => setFontSize(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+```
+
+## Context values
+
+<ResponseField name="currentTheme" type="Theme">
+  The currently active theme object containing colors, typography, and button styles.
+  
+  <Expandable title="Theme properties">
+    <ResponseField name="id" type="ThemeType">
+      Theme identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the theme
+    </ResponseField>
+    <ResponseField name="colors" type="object">
+      Color palette including primary, secondary, background, surface, text, borders, sidebar, header, and button colors
+    </ResponseField>
+    <ResponseField name="typography" type="object">
+      Font configuration for headings, subheadings, body text, and UI elements
+    </ResponseField>
+    <ResponseField name="buttons" type="object">
+      Button styling including style (`'rounded'`, `'square'`, `'pill'`), shadow, animation, and state properties
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="setTheme" type="(themeId: ThemeType) => void">
+  Changes the active theme. Persists the selection to `localStorage`.
+</ResponseField>
+
+<ResponseField name="fontSize" type="number">
+  Current font size percentage (default: 100, range: 80-120)
+</ResponseField>
+
+<ResponseField name="setFontSize" type="(size: number) => void">
+  Updates the base font size percentage. Persists to `localStorage`.
+</ResponseField>
+
+<ResponseField name="buttonStyle" type="'rounded' | 'square' | 'pill'">
+  Current button style preference
+</ResponseField>
+
+<ResponseField name="setButtonStyle" type="(style: 'rounded' | 'square' | 'pill') => void">
+  Changes button style globally. Persists to `localStorage`.
+</ResponseField>
+
+## TypeScript types
+
+### ThemeContextType
+
+```tsx
+interface ThemeContextType {
+  currentTheme: Theme;
+  setTheme: (themeId: ThemeType) => void;
+  fontSize: number;
+  setFontSize: (size: number) => void;
+  buttonStyle: Theme['buttons']['style'];
+  setButtonStyle: (style: Theme['buttons']['style']) => void;
+}
+```
+
+### ThemeType
+
+```tsx
+type ThemeType = 
+  | 'light' 
+  | 'dark' 
+  | 'professional' 
+  | 'modern' 
+  | 'minimal' 
+  | 'ocean' 
+  | 'forest' 
+  | 'sunset'
+  | 'forest-night'
+  | 'ocean-breeze'
+  | 'sunset-orange'
+  | 'forest-green'
+  | 'terra-cotta'
+  | 'sage-clay'
+  | 'desert-sand'
+  | 'walnut-bark';
+```
+
+### Theme
+
+```tsx
+interface Theme {
+  id: ThemeType;
+  name: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+    text: string;
+    textSecondary: string;
+    border: string;
+    sidebar: string;
+    sidebarText: string;
+    sidebarHover: string;
+    header: string;
+    headerText: string;
+    buttonPrimary: string;
+    buttonSecondary: string;
+    buttonText: string;
+  };
+  typography: {
+    fonts: {
+      headings: 'Plus Jakarta Sans';
+      subheadings: 'Montserrat';
+      body: 'Inter';
+      ui: 'DM Sans';
+    };
+    baseSize: 16;
+  };
+  buttons: {
+    style: 'rounded' | 'square' | 'pill';
+    shadow: boolean;
+    animation: boolean;
+    states: {
+      hover: { opacity: number; scale: number };
+      active: { scale: number };
+      disabled: { opacity: number };
+    };
+  };
+}
+```
+
+## Usage examples
+
+### Applying theme colors
+
+```tsx Card.tsx
+import { useTheme } from './contexts/ThemeContext';
+
+export function Card({ children }: { children: React.ReactNode }) {
+  const { currentTheme } = useTheme();
+
+  return (
+    <div
+      style={{
+        backgroundColor: currentTheme.colors.surface,
+        color: currentTheme.colors.text,
+        borderColor: currentTheme.colors.border,
+        padding: '1rem',
+        borderRadius: '0.5rem',
+        border: '1px solid',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+```
+
+### Building a theme switcher
+
+```tsx ThemeSwitcher.tsx
+import { useTheme } from './contexts/ThemeContext';
+import { themes } from './types/theme';
+
+export function ThemeSwitcher() {
+  const { currentTheme, setTheme } = useTheme();
+
+  return (
+    <div>
+      <h3>Choose a theme</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+        {Object.values(themes).map((theme) => (
+          <button
+            key={theme.id}
+            onClick={() => setTheme(theme.id)}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.buttonText,
+              padding: '1rem',
+              border: currentTheme.id === theme.id ? '2px solid black' : 'none',
+            }}
+          >
+            {theme.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Font size control
+
+```tsx AccessibilitySettings.tsx
+import { useTheme } from './contexts/ThemeContext';
+
+export function AccessibilitySettings() {
+  const { fontSize, setFontSize } = useTheme();
+
+  return (
+    <div>
+      <label>
+        Font Size: {fontSize}%
+        <input
+          type="range"
+          min={80}
+          max={120}
+          step={5}
+          value={fontSize}
+          onChange={(e) => setFontSize(Number(e.target.value))}
+        />
+      </label>
+      
+      <div>
+        <button onClick={() => setFontSize(80)}>Small</button>
+        <button onClick={() => setFontSize(100)}>Medium</button>
+        <button onClick={() => setFontSize(120)}>Large</button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Button style customization
+
+```tsx ButtonStyleSelector.tsx
+import { useTheme } from './contexts/ThemeContext';
+
+export function ButtonStyleSelector() {
+  const { buttonStyle, setButtonStyle } = useTheme();
+
+  return (
+    <div>
+      <h3>Button Style</h3>
+      <button 
+        onClick={() => setButtonStyle('rounded')}
+        disabled={buttonStyle === 'rounded'}
+      >
+        Rounded
+      </button>
+      <button 
+        onClick={() => setButtonStyle('square')}
+        disabled={buttonStyle === 'square'}
+      >
+        Square
+      </button>
+      <button 
+        onClick={() => setButtonStyle('pill')}
+        disabled={buttonStyle === 'pill'}
+      >
+        Pill
+      </button>
+    </div>
+  );
+}
+```
+
+## Implementation details
+
+### CSS variables
+
+The theme context automatically applies CSS variables to the document root:
+
+```css
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #60A5FA;
+  --color-background: #F3F4F6;
+  --color-surface: #FFFFFF;
+  --color-text: #111827;
+  --font-headings: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --user-font-size-percentage: 100;
+  /* ... more variables */
+}
+```
+
+You can use these variables in your CSS:
+
+```css styles.css
+.card {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.heading {
+  font-family: var(--font-headings);
+  color: var(--color-primary);
+}
+```
+
+### Persistence
+
+User preferences are automatically saved to `localStorage`:
+
+- `app-theme`: Selected theme ID
+- `app-font-size`: Font size percentage
+- `app-button-style`: Button style preference
+
+### Performance
+
+The context uses `useMemo` to prevent unnecessary re-renders and applies CSS changes via `requestAnimationFrame` for smooth transitions.

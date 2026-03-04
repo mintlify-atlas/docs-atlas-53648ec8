@@ -1,0 +1,429 @@
+---
+title: Configuration
+description: Configure DoctorSoft+ for development and production. Learn about environment variables, Supabase setup, and advanced configuration options.
+---
+
+DoctorSoft+ uses environment variables for configuration. This guide covers all configuration options, from basic setup to advanced customization.
+
+## Environment variables
+
+All configuration is done through environment variables prefixed with `VITE_`. Create a `.env` file in the root directory of your project.
+
+### Required variables
+
+These variables must be set for the application to function:
+
+#### VITE_SUPABASE_URL
+
+The URL of your Supabase project.
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+```
+
+<Note>
+You can find this value in your Supabase project dashboard under Settings > API > Project URL.
+</Note>
+
+#### VITE_SUPABASE_ANON_KEY
+
+The anonymous (public) API key for your Supabase project.
+
+```bash
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+<Warning>
+This is your public key and is safe to expose in client-side code. Never commit your service role key to version control.
+</Warning>
+
+You can find this in your Supabase dashboard under Settings > API > Project API keys > anon public.
+
+### Optional variables
+
+These variables have default values but can be customized:
+
+#### VITE_MAX_FILE_SIZE_MB
+
+Maximum file size in megabytes for document uploads (lab results, medical images, etc.).
+
+```bash
+VITE_MAX_FILE_SIZE_MB=10
+```
+
+**Default**: `10` (10 MB)
+
+<Tip>
+For medical imaging, you may want to increase this to 50 MB or higher to accommodate DICOM files and high-resolution scans.
+</Tip>
+
+#### VITE_BUCKET_NAME
+
+The name of the Supabase Storage bucket for file uploads.
+
+```bash
+VITE_BUCKET_NAME=00000000-default-bucket
+```
+
+**Default**: `00000000-default-bucket`
+
+### Advanced optional variables
+
+#### VITE_APP_VERSION
+
+Application version string sent with API requests.
+
+```bash
+VITE_APP_VERSION=25.40
+```
+
+**Default**: `dev`
+
+This value is automatically sent in the API headers:
+
+```typescript
+global: {
+  headers: {
+    'x-application-name': `doctorsoft/${appVersion}`
+  }
+}
+```
+
+#### VITE_SUPABASE_DETECT_SESSION_IN_URL
+
+Enable OAuth session detection from URL parameters.
+
+```bash
+VITE_SUPABASE_DETECT_SESSION_IN_URL=false
+```
+
+**Default**: `false`
+
+<Note>
+This is disabled by default for better performance. Only enable if you're using OAuth providers (Google, GitHub, etc.).
+</Note>
+
+## Complete .env file example
+
+Here's a complete example with all variables:
+
+<CodeGroup>
+```bash Development
+# Required - Supabase configuration
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Optional - File upload configuration
+VITE_MAX_FILE_SIZE_MB=10
+VITE_BUCKET_NAME=00000000-default-bucket
+
+# Optional - App metadata
+VITE_APP_VERSION=25.40
+
+# Optional - OAuth (only if needed)
+VITE_SUPABASE_DETECT_SESSION_IN_URL=false
+```
+
+```bash Production
+# Required - Supabase configuration
+VITE_SUPABASE_URL=https://prod-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Optional - File upload configuration (increased for production)
+VITE_MAX_FILE_SIZE_MB=50
+VITE_BUCKET_NAME=prod-medical-files
+
+# Optional - App metadata
+VITE_APP_VERSION=25.40
+```
+</CodeGroup>
+
+## Supabase setup
+
+DoctorSoft+ requires a properly configured Supabase project. Follow these steps to set up your backend.
+
+<Steps>
+  <Step title="Create a Supabase project">
+    1. Go to [supabase.com](https://supabase.com) and sign in
+    2. Click "New Project"
+    3. Choose a name and strong database password
+    4. Select a region close to your users
+    5. Wait for the project to finish provisioning
+  </Step>
+
+  <Step title="Get your API credentials">
+    Navigate to Settings > API in your Supabase dashboard:
+    
+    1. Copy the **Project URL** → Use for `VITE_SUPABASE_URL`
+    2. Copy the **anon public** key → Use for `VITE_SUPABASE_ANON_KEY`
+    
+    <Warning>
+    Never use the service_role key in client-side code. It bypasses Row Level Security (RLS) and should only be used in secure server environments.
+    </Warning>
+  </Step>
+
+  <Step title="Set up authentication">
+    DoctorSoft+ uses Supabase Auth for user management:
+    
+    1. Go to Authentication > Settings in Supabase
+    2. Configure your email templates (optional)
+    3. Set up your site URL: `http://localhost:5173` for development
+    4. Add redirect URLs if needed
+    
+    The application uses the following authentication features:
+    
+    ```typescript
+    // Email/password authentication
+    await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
+    });
+    ```
+  </Step>
+
+  <Step title="Configure storage bucket">
+    For file uploads (medical documents, images):
+    
+    1. Go to Storage in your Supabase dashboard
+    2. Create a new bucket or use the default bucket
+    3. Set up Row Level Security (RLS) policies:
+       - Allow authenticated users to upload files
+       - Allow users to read their own files
+       - Restrict deletion to file owners or admins
+    
+    Update your `.env` with the bucket name:
+    
+    ```bash
+    VITE_BUCKET_NAME=your-bucket-name
+    ```
+  </Step>
+
+  <Step title="Set up database tables">
+    DoctorSoft+ requires the following database tables:
+    
+    - `tcUsuarios`: User profiles (linked to auth.users)
+    - Additional medical practice tables
+    
+    The user profile is created automatically on registration:
+    
+    ```typescript
+    // Automatic profile creation after signup
+    await supabase
+      .from('tcUsuarios')
+      .insert({
+        idusuario: signUpData.user?.id,
+        idbu: DEFAULT_BU,
+        nombre: data.nombre,
+        email: data.email,
+        estado: 'Activo',
+        rol: 'Medico'
+      });
+    ```
+  </Step>
+</Steps>
+
+## Supabase client configuration
+
+DoctorSoft+ includes advanced Supabase client configuration for optimal performance and reliability.
+
+### Connection timeout
+
+The client uses a 15-second timeout for API requests:
+
+```typescript
+const fetchWithTimeout = (url: string, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  const withSignal: RequestInit = { ...options, signal: controller.signal };
+  
+  return fetch(url, withSignal)
+    .catch((error) => {
+      if (error.name === 'AbortError') {
+        throw new Error('Conexión a Supabase interrumpida por timeout (15s)');
+      }
+      throw error;
+    })
+    .finally(() => clearTimeout(timeoutId));
+};
+```
+
+### Authentication options
+
+The client is configured with these auth settings:
+
+```typescript
+auth: {
+  autoRefreshToken: true,              // Automatically refresh expired tokens
+  detectSessionInUrl: false,           // Disabled for performance (enable for OAuth)
+  storage: customStorage,              // SSR-safe localStorage wrapper
+  storageKey: 'supabase.auth.session', // Session storage key
+  persistSession: true,                // Persist session across page reloads
+  flowType: 'pkce'                     // PKCE flow for enhanced security
+}
+```
+
+<Note>
+PKCE (Proof Key for Code Exchange) provides enhanced security for the authentication flow.
+</Note>
+
+### Realtime configuration
+
+Realtime subscriptions are configured with rate limiting:
+
+```typescript
+realtime: {
+  params: { eventsPerSecond: 2 }
+}
+```
+
+### Custom headers
+
+All API requests include the application version:
+
+```typescript
+global: {
+  fetch: fetchWithTimeout,
+  headers: {
+    'x-application-name': `doctorsoft/${appVersion}`
+  }
+}
+```
+
+## Build-time validation
+
+DoctorSoft+ validates configuration at build time to catch errors early:
+
+```typescript
+// vite.config.ts validates required environment variables
+let hasErrors = false;
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar.name]) {
+    if (envVar.required) {
+      console.error(`ERROR: ${envVar.name} is required`);
+      hasErrors = true;
+    }
+  }
+}
+
+if (hasErrors) {
+  console.error('\nBuild cannot continue without required environment variables.');
+}
+```
+
+<Warning>
+If required environment variables are missing, the build will fail with a clear error message.
+</Warning>
+
+## Runtime validation
+
+The Supabase client also validates configuration at runtime:
+
+```typescript
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Faltan las variables de entorno de Supabase. Revisa tu archivo .env.');
+}
+```
+
+In development mode, additional debug information is logged:
+
+```typescript
+if (import.meta.env.DEV) {
+  console.log('Supabase URL encontrada:', !!supabaseUrl);
+  console.log('Supabase Key encontrada:', !!supabaseKey);
+  console.log('Versión de la app:', appVersion);
+}
+```
+
+## Deployment configuration
+
+For production deployments, environment variables must be configured in your hosting platform:
+
+### Netlify
+
+1. Go to Site Settings > Build & Deploy > Environment
+2. Add all required environment variables
+3. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+### Vercel
+
+1. Go to Project Settings > Environment Variables
+2. Add all required variables for Production, Preview, and Development
+3. Configure build settings:
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+
+### Other platforms
+
+For any platform:
+1. Set Node.js version to 18+
+2. Add all environment variables
+3. Set build command to `npm run build`
+4. Set output directory to `dist`
+
+<Tip>
+Most platforms support importing environment variables from a `.env` file. Check your platform's documentation for the easiest setup method.
+</Tip>
+
+## Security best practices
+
+### Never commit secrets
+
+Add `.env` to your `.gitignore`:
+
+```bash
+# .gitignore
+.env
+.env.local
+.env.*.local
+```
+
+### Use different credentials per environment
+
+Use separate Supabase projects for development, staging, and production:
+
+- `dev-project.supabase.co` for local development
+- `staging-project.supabase.co` for testing
+- `prod-project.supabase.co` for production
+
+### Rotate keys regularly
+
+Periodically rotate your Supabase API keys, especially if they may have been compromised.
+
+## Troubleshooting
+
+### Environment variables not loading
+
+If environment variables aren't being loaded:
+
+1. Ensure your `.env` file is in the root directory
+2. Restart the development server: `npm run dev`
+3. Check that variables are prefixed with `VITE_`
+4. Verify no syntax errors in the `.env` file
+
+### Supabase connection errors
+
+Detailed error information is logged to the console:
+
+```typescript
+console.error('Supabase fetch error details:', {
+  url,
+  error: error.message,
+  supabaseUrl: supabaseUrl,
+  hasValidUrl: !!supabaseUrl && supabaseUrl.startsWith('https://'),
+  hasValidKey: !!supabaseKey && supabaseKey.length > 50
+});
+```
+
+Check the browser console for these details if you encounter connection issues.
+
+## Next steps
+
+- Follow the [quickstart guide](/quickstart) to start using DoctorSoft+
+- Learn about [deployment](/deployment/overview) for production
+- Review the [API documentation](/api/patient-service) for advanced usage

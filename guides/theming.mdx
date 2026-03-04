@@ -1,0 +1,476 @@
+---
+title: Theming
+description: Customize the appearance of DoctorSoft+ with themes, color schemes, fonts, and button styles
+---
+
+## Overview
+
+DoctorSoft+ provides a comprehensive theming system that allows users to customize the application's appearance including color schemes, typography, button styles, and font sizes.
+
+## Theme context
+
+The theming system is built around `ThemeContext` which manages theme preferences and applies them globally.
+
+### Using the theme hook
+
+```tsx
+import { useTheme } from '../contexts/ThemeContext';
+
+function MyComponent() {
+  const { 
+    currentTheme, 
+    setTheme, 
+    fontSize, 
+    setFontSize,
+    buttonStyle,
+    setButtonStyle 
+  } = useTheme();
+  
+  return (
+    <div style={{ color: currentTheme.colors.text }}>
+      Hello, themed world!
+    </div>
+  );
+}
+```
+
+## Available themes
+
+DoctorSoft+ includes multiple built-in color themes:
+
+<Accordion title="Light theme">
+  The default theme with a clean, bright appearance suitable for well-lit environments.
+</Accordion>
+
+<Accordion title="Dark theme">
+  A dark color scheme that reduces eye strain in low-light conditions.
+</Accordion>
+
+<Accordion title="Forest Green theme">
+  A calming green-based theme.
+</Accordion>
+
+<Accordion title="Sunset Orange theme">
+  A warm orange-based theme.
+</Accordion>
+
+<Accordion title="Ocean Blue theme">
+  A professional blue-based theme.
+</Accordion>
+
+## Switching themes
+
+Change the active theme using the `setTheme` function:
+
+```tsx
+import { useTheme } from '../contexts/ThemeContext';
+
+function ThemeSelector() {
+  const { setTheme } = useTheme();
+  
+  return (
+    <div>
+      <button onClick={() => setTheme('light')}>Light</button>
+      <button onClick={() => setTheme('dark')}>Dark</button>
+      <button onClick={() => setTheme('forest-green')}>Forest Green</button>
+      <button onClick={() => setTheme('ocean-blue')}>Ocean Blue</button>
+      <button onClick={() => setTheme('sunset-orange')}>Sunset Orange</button>
+    </div>
+  );
+}
+```
+
+<Note>
+  Theme preferences are automatically saved to localStorage and persist across sessions.
+</Note>
+
+## Appearance settings component
+
+The `AppearanceSettings` component (`src/components/AppearanceSettings.tsx`) provides a complete UI for customizing the application appearance.
+
+### Theme selector
+
+Display all available themes in a grid:
+
+```tsx
+import { themes } from '../types/theme';
+import { useTheme } from '../contexts/ThemeContext';
+
+function ThemeGrid() {
+  const { currentTheme, setTheme } = useTheme();
+  
+  return (
+    <div className="flex flex-wrap gap-3">
+      {Object.values(themes).map((theme) => (
+        <button
+          key={theme.id}
+          onClick={() => setTheme(theme.id)}
+          className={currentTheme.id === theme.id ? 'selected' : ''}
+          style={{
+            background: theme.colors.surface,
+            color: theme.colors.text,
+            borderColor: currentTheme.id === theme.id 
+              ? theme.colors.primary
+              : theme.colors.border,
+          }}
+        >
+          <div
+            style={{ background: theme.colors.primary }}
+            className="w-full h-12 rounded-md"
+          />
+          <span>{theme.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+## Color system
+
+Each theme provides a comprehensive color palette:
+
+### Core colors
+
+```tsx
+const { currentTheme } = useTheme();
+
+// Primary brand color
+currentTheme.colors.primary
+
+// Background colors
+currentTheme.colors.background  // Main background
+currentTheme.colors.surface     // Card/panel background
+
+// Text colors
+currentTheme.colors.text           // Primary text
+currentTheme.colors.textSecondary  // Secondary/muted text
+
+// UI elements
+currentTheme.colors.border         // Borders and dividers
+```
+
+### Button colors
+
+```tsx
+// Primary button
+currentTheme.colors.buttonPrimary  // Background
+currentTheme.colors.buttonText     // Text color
+
+// Secondary button
+currentTheme.colors.buttonSecondary
+currentTheme.colors.buttonSecondaryText
+```
+
+### Applying theme colors
+
+```tsx
+<div 
+  style={{ 
+    background: currentTheme.colors.surface,
+    color: currentTheme.colors.text,
+    borderColor: currentTheme.colors.border,
+  }}
+>
+  Themed content
+</div>
+```
+
+## Typography system
+
+### Font families
+
+Each theme can specify different font families for various text elements:
+
+```tsx
+const { currentTheme } = useTheme();
+
+// Apply fonts
+style={{
+  fontFamily: currentTheme.typography.fonts.headings,    // For headings
+  fontFamily: currentTheme.typography.fonts.subheadings, // For subheadings
+  fontFamily: currentTheme.typography.fonts.body,        // For body text
+  fontFamily: currentTheme.typography.fonts.ui,          // For UI elements
+}}
+```
+
+### Font size customization
+
+Users can adjust the global font size from 80% to 120%:
+
+```tsx
+import { useTheme } from '../contexts/ThemeContext';
+
+function FontSizeControl() {
+  const { fontSize, setFontSize } = useTheme();
+  
+  return (
+    <div>
+      <input
+        type="range"
+        min="80"
+        max="120"
+        value={fontSize}
+        onChange={(e) => setFontSize(Number(e.target.value))}
+      />
+      <span>{fontSize}%</span>
+    </div>
+  );
+}
+```
+
+<Tip>
+  Font size preferences are saved to localStorage and applied globally using CSS variables.
+</Tip>
+
+### Preview font changes
+
+Show users how their font size selection looks:
+
+```tsx
+<div 
+  className="p-4 rounded-lg"
+  style={{ 
+    background: currentTheme.colors.background,
+    fontSize: `${fontSize}%`,
+    color: currentTheme.colors.text,
+  }}
+>
+  <p>Texto de ejemplo - Más vale una onza de salud que una libra de oro.</p>
+</div>
+```
+
+## Button styles
+
+DoctorSoft+ offers three button style options:
+
+### Rounded buttons
+
+```tsx
+setButtonStyle('rounded');  // Soft rounded corners (0.5rem border-radius)
+```
+
+### Square buttons
+
+```tsx
+setButtonStyle('square');   // Sharp corners (no border-radius)
+```
+
+### Pill buttons
+
+```tsx
+setButtonStyle('pill');     // Fully rounded (9999px border-radius)
+```
+
+### Implementing themed buttons
+
+```tsx
+import { useTheme } from '../contexts/ThemeContext';
+import clsx from 'clsx';
+
+function ThemedButton({ children, onClick }) {
+  const { currentTheme, buttonStyle } = useTheme();
+  
+  const buttonClass = clsx(
+    'px-4 py-2 transition-colors',
+    buttonStyle === 'pill' && 'rounded-full',
+    buttonStyle === 'rounded' && 'rounded-lg',
+    buttonStyle === 'square' && 'rounded-none',
+    currentTheme.buttons?.shadow && 'shadow-sm hover:shadow-md',
+    currentTheme.buttons?.animation && 'hover:scale-105'
+  );
+  
+  const buttonStyles = {
+    background: currentTheme.colors.buttonPrimary,
+    color: currentTheme.colors.buttonText,
+  };
+  
+  return (
+    <button className={buttonClass} style={buttonStyles} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+```
+
+## CSS variables
+
+The theme system automatically sets CSS variables for easy styling:
+
+```css
+:root {
+  /* Colors */
+  --color-primary: #your-primary-color;
+  --color-background: #your-background;
+  --color-text: #your-text-color;
+  /* ... and more */
+  
+  /* Fonts */
+  --font-headings: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  /* Font size */
+  --user-font-size-percentage: 100;
+}
+```
+
+Use them in your CSS:
+
+```css
+.my-element {
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-family: var(--font-headings);
+}
+```
+
+## Theme persistence
+
+Theme preferences are automatically saved and loaded:
+
+<Steps>
+  <Step title="Initial load">
+    Theme preferences are loaded synchronously on module load for instant theme application without flash.
+  </Step>
+  
+  <Step title="User changes">
+    When users change theme settings, they're immediately saved to localStorage:
+    - Theme ID: `'app-theme'`
+    - Font size: `'app-font-size'`
+    - Button style: `'app-button-style'`
+  </Step>
+  
+  <Step title="Next session">
+    Preferences are automatically restored when the user returns.
+  </Step>
+</Steps>
+
+## Performance optimization
+
+The theme system is optimized for performance:
+
+### Memoized CSS variables
+
+```tsx
+const cssVariables = useMemo(() => {
+  const vars: Record<string, string> = {};
+  
+  // Generate CSS variables from theme
+  for (const key in currentTheme.colors) {
+    vars[`--color-${key}`] = currentTheme.colors[key];
+  }
+  
+  return vars;
+}, [currentTheme, fontSize]);
+```
+
+### Efficient DOM updates
+
+```tsx
+useEffect(() => {
+  const root = document.documentElement;
+  requestAnimationFrame(() => {
+    for (const [property, value] of Object.entries(cssVariables)) {
+      root.style.setProperty(property, value);
+    }
+  });
+}, [cssVariables]);
+```
+
+<Note>
+  CSS variable updates are batched using `requestAnimationFrame` to prevent layout thrashing.
+</Note>
+
+## Building the appearance settings UI
+
+Create a complete appearance customization interface:
+
+```tsx
+import { AppearanceSettings } from '../components/AppearanceSettings';
+
+function SettingsPage() {
+  return (
+    <div>
+      <h1>Configuración de Apariencia</h1>
+      <AppearanceSettings />
+    </div>
+  );
+}
+```
+
+The `AppearanceSettings` component includes:
+- Theme color selector with preview swatches
+- Button style selector with visual examples
+- Font size slider with live preview
+
+## Best practices
+
+<Steps>
+  <Step title="Always use theme colors">
+    Instead of hardcoding colors, always use theme values:
+    
+    ```tsx
+    // Good
+    style={{ color: currentTheme.colors.text }}
+    
+    // Bad
+    style={{ color: '#333333' }}
+    ```
+  </Step>
+  
+  <Step title="Support all button styles">
+    Ensure your buttons work with all three style variants (rounded, square, pill).
+  </Step>
+  
+  <Step title="Test with different font sizes">
+    Make sure your UI doesn't break when users select 80% or 120% font size.
+  </Step>
+  
+  <Step title="Use semantic color names">
+    Use `currentTheme.colors.text` instead of `currentTheme.colors.primary` for text to ensure proper contrast.
+  </Step>
+</Steps>
+
+## Custom theme creation
+
+To add a new theme, define it in the themes object:
+
+```tsx
+export const themes = {
+  // Existing themes...
+  
+  'custom-theme': {
+    id: 'custom-theme',
+    name: 'Custom Theme',
+    colors: {
+      primary: '#your-color',
+      background: '#your-bg',
+      surface: '#your-surface',
+      text: '#your-text',
+      textSecondary: '#your-secondary',
+      border: '#your-border',
+      buttonPrimary: '#your-button',
+      buttonText: '#your-button-text',
+      buttonSecondary: '#your-secondary-btn',
+      buttonSecondaryText: '#your-secondary-text',
+    },
+    typography: {
+      fonts: {
+        headings: 'Inter',
+        subheadings: 'Inter',
+        body: 'Inter',
+        ui: 'Inter',
+      },
+    },
+    buttons: {
+      style: 'rounded',
+      shadow: true,
+      animation: true,
+    },
+  },
+};
+```
+
+<Warning>
+  Ensure sufficient color contrast between text and background colors for accessibility compliance.
+</Warning>

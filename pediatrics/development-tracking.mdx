@@ -1,0 +1,406 @@
+---
+title: Development tracking
+description: Monitor and document pediatric developmental milestones, growth velocity, and health trends over time for comprehensive child health assessment.
+---
+
+Development tracking in DoctorSoft+ allows healthcare providers to monitor pediatric patients' physical growth patterns, health trends, and overall development through comprehensive analysis of somatometry data over time.
+
+## Overview
+
+The development tracking system analyzes historical somatometry records to identify growth trends, calculate growth velocity, and flag potential developmental concerns. This enables early detection of growth disorders and nutritional issues.
+
+## Growth statistics
+
+DoctorSoft+ automatically calculates key growth statistics from all somatometry records:
+
+### Calculated metrics
+
+<CardGroup cols={2}>
+  <Card title="Total measurements" icon="list">
+    Count of all somatometry records for comprehensive tracking history
+  </Card>
+  <Card title="Average values" icon="calculator">
+    Mean weight, height, and BMI across all measurements
+  </Card>
+  <Card title="Growth trend" icon="trending-up">
+    Pattern analysis: improving, stable, or concerning
+  </Card>
+  <Card title="Alert count" icon="alert-circle">
+    Number of warning and danger-level alerts triggered
+  </Card>
+</CardGroup>
+
+## Growth analysis
+
+The system performs automated growth analysis when viewing patient data:
+
+<Steps>
+  <Step title="Retrieve measurements">
+    All somatometry records for the patient are loaded from the database, sorted by date.
+  </Step>
+  
+  <Step title="Calculate current age">
+    The patient's age in months is calculated from birth date and most recent measurement date.
+  </Step>
+  
+  <Step title="Load WHO percentiles">
+    Gender and age-appropriate WHO percentile data is retrieved for comparison.
+  </Step>
+  
+  <Step title="Analyze each metric">
+    Weight, height, BMI, and head circumference (if applicable) are analyzed against WHO standards.
+  </Step>
+  
+  <Step title="Generate growth analysis">
+    The system produces a comprehensive analysis including:
+    - Current percentile position for each metric
+    - Z-score calculations
+    - Status classifications
+    - Clinical alerts if thresholds are exceeded
+  </Step>
+</Steps>
+
+## Percentile calculations
+
+DoctorSoft+ calculates percentiles by comparing patient measurements to WHO reference data:
+
+### Interpolation method
+
+When a measurement falls between WHO percentile values, the system uses linear interpolation to estimate the exact percentile:
+
+```
+Percentile = P1 + ((value - V1) / (V2 - V1)) × (P2 - P1)
+```
+
+Where:
+- `P1`, `P2` = Lower and upper percentile bounds
+- `V1`, `V2` = Corresponding WHO reference values
+- `value` = Patient's actual measurement
+
+<Info>
+  Percentiles are calculated separately for weight-for-age, height-for-age, BMI-for-age, and head circumference-for-age using gender-specific reference data.
+</Info>
+
+## Z-score calculation
+
+Z-scores indicate how many standard deviations a measurement is from the median:
+
+```
+Z-score = (value - median) / standard deviation
+```
+
+### Z-score interpretation
+
+| Z-score Range | Interpretation | Clinical Action |
+|---------------|----------------|----------------|
+| > +3 | Extremely high | Immediate evaluation |
+| +2 to +3 | High | Monitor closely |
+| -2 to +2 | Normal range | Routine follow-up |
+| -2 to -3 | Low | Assess for risk factors |
+| < -3 | Extremely low | Immediate intervention |
+
+<Note>
+  Z-scores are particularly useful for tracking individual children over time and identifying growth faltering before it becomes severe.
+</Note>
+
+## Growth status classifications
+
+The system automatically classifies growth status for each measurement type:
+
+### Weight status
+
+- **Underweight**: Below P3 (Z-score < -2)
+- **Normal**: P3 to P97 (Z-score -2 to +2)
+- **Overweight**: Above P97 (Z-score > +2)
+
+### Height status
+
+- **Short stature**: Below P3 (Z-score < -2)
+- **Normal**: P3 to P97 (Z-score -2 to +2)
+- **Tall stature**: Above P97 (Z-score > +2)
+
+### BMI status
+
+- **Underweight**: Below P15 (Z-score < -1)
+- **Normal**: P15 to P85 (Z-score -1 to +1)
+- **Overweight**: P85 to P97 (Z-score +1 to +2)
+- **Obesity**: Above P97 (Z-score > +2)
+
+### Head circumference status
+
+For children 0-36 months:
+
+- **Microcephaly**: Below P3 (Z-score < -2)
+- **Normal**: P3 to P97 (Z-score -2 to +2)
+- **Macrocephaly**: Above P97 (Z-score > +2)
+
+## Growth trend analysis
+
+The system evaluates growth patterns by analyzing multiple measurements over time:
+
+### Trend categories
+
+<Steps>
+  <Step title="Improving">
+    Patient is moving toward ideal percentiles:
+    - Underweight child gaining weight appropriately
+    - Overweight child reducing BMI toward normal range
+    - Consistent upward trajectory in height
+  </Step>
+  
+  <Step title="Stable">
+    Patient consistently tracks along same percentile curve:
+    - Minimal percentile crossing
+    - Steady growth velocity
+    - Age-appropriate development
+  </Step>
+  
+  <Step title="Concerning">
+    Patient shows worrisome growth patterns:
+    - Crossing two or more percentile lines downward
+    - Rapid weight gain (obesity risk)
+    - Growth deceleration
+    - Head circumference crossing percentiles
+  </Step>
+</Steps>
+
+## Growth velocity
+
+While not automatically displayed, growth velocity can be calculated from sequential measurements:
+
+### Weight velocity
+
+```
+Weight gain (g/day) = (Weight₂ - Weight₁) × 1000 / days between measurements
+```
+
+### Height velocity
+
+```
+Height gain (cm/year) = (Height₂ - Height₁) × 365 / days between measurements
+```
+
+<Info>
+  Expected growth velocities vary by age. Infants grow more rapidly than older children, with velocity decreasing over time.
+</Info>
+
+## Age calculations for development
+
+Accurate age calculation is critical for proper percentile matching:
+
+### Total age in months
+
+Used for WHO percentile lookups:
+
+```javascript
+ageMonths = (years × 12) + months + (days >= 15 ? 1 : 0)
+```
+
+### Detailed age breakdown
+
+Displayed to providers:
+
+- **Years**: Complete years lived
+- **Months**: Remaining complete months
+- **Days**: Remaining days
+- **Total months**: Used for percentile queries
+- **Total days**: Used for growth velocity calculations
+
+<Note>
+  The system accounts for leap years and varying month lengths to ensure precise age calculations that match WHO methodology.
+</Note>
+
+## Clinical alerts
+
+The system can generate alerts based on growth analysis:
+
+### Alert triggers
+
+- Measurement below P3 or above P97
+- Rapid percentile crossing (>2 major percentiles)
+- BMI indicating obesity (>P97)
+- Head circumference suggesting microcephaly or macrocephaly
+- Discordance between weight and height percentiles
+
+### Alert severity levels
+
+| Level | Indicator | Examples |
+|-------|-----------|----------|
+| Warning | Yellow badge | P3-P15 or P85-P97 range |
+| Danger | Red badge | Below P3 or above P97 |
+
+## Monitoring recommendations
+
+### Measurement frequency
+
+<Steps>
+  <Step title="Birth to 6 months">
+    Measure at birth, 2 weeks, 2 months, 4 months, and 6 months for rapid growth period.
+  </Step>
+  
+  <Step title="6 to 24 months">
+    Measure every 3 months to track toddler growth velocity.
+  </Step>
+  
+  <Step title="2 to 5 years">
+    Measure every 6 months or at annual well-child visits.
+  </Step>
+  
+  <Step title="Special circumstances">
+    Increase frequency for:
+    - Failure to thrive
+    - Obesity management
+    - Chronic illness
+    - Nutritional intervention
+  </Step>
+</Steps>
+
+## Data-driven insights
+
+The development tracking system provides valuable insights:
+
+### Summary dashboard
+
+Displayed after loading patient somatometry records:
+
+- **Measurement count**: Total somatometry records (e.g., "8 mediciones")
+- **Current weight**: Most recent weight measurement
+- **Current age**: Age at most recent measurement
+- **Growth pattern**: Visual representation on growth charts
+
+### Historical comparison
+
+Providers can:
+
+- Compare current measurements to previous visits
+- Identify seasonal growth patterns
+- Track intervention effectiveness
+- Document catch-up growth after illness
+
+## Integration with other modules
+
+Development tracking works seamlessly with:
+
+### Somatometry records
+
+Each recorded measurement contributes to the development timeline:
+
+- Measurements stored in `tpSomatometrias` table
+- Linked to patient via `patient_id`
+- Timestamped with `measurement_date`
+- Associated with provider via `measured_by`
+
+### Growth charts
+
+Visual representation of development:
+
+- All measurements plotted automatically
+- Trends visible across multiple charts
+- WHO percentile curves for reference
+
+### Clinical notes
+
+Development insights can inform:
+
+- Well-child visit documentation
+- Nutritional counseling notes
+- Referral justification to specialists
+- Parent education materials
+
+## Using development data
+
+### Nutritional assessment
+
+<Steps>
+  <Step title="Review BMI trend">
+    Check if BMI-for-age is tracking appropriately or showing concerning patterns.
+  </Step>
+  
+  <Step title="Assess weight-for-height">
+    Determine if weight is proportional to height (wasting vs. stunting).
+  </Step>
+  
+  <Step title="Evaluate velocity">
+    Calculate recent growth velocity to identify slow or rapid changes.
+  </Step>
+  
+  <Step title="Plan intervention">
+    Use data to guide dietary recommendations and follow-up schedule.
+  </Step>
+</Steps>
+
+### Developmental screening
+
+Growth data complements developmental assessment:
+
+- Head circumference helps identify neurological concerns
+- Overall growth may indicate chronic disease
+- BMI patterns can affect developmental milestones
+- Nutritional status impacts cognitive development
+
+<Warning>
+  Growth measurements are one component of comprehensive developmental assessment. Always consider motor, cognitive, language, and social-emotional development.
+</Warning>
+
+## Best practices for tracking
+
+<Steps>
+  <Step title="Consistent technique">
+    Use standardized measurement techniques at every visit to ensure reliable trend data.
+  </Step>
+  
+  <Step title="Multiple data points">
+    Collect at least 3-4 measurements over 6-12 months to establish reliable growth patterns.
+  </Step>
+  
+  <Step title="Context consideration">
+    Interpret growth in context of:
+    - Family history (parental heights)
+    - Ethnicity and genetic background
+    - Chronic conditions
+    - Medications affecting growth
+  </Step>
+  
+  <Step title="Regular review">
+    Review growth charts at every visit, not just when concerns arise.
+  </Step>
+  
+  <Step title="Parent communication">
+    Share growth trends with parents using visual charts to enhance understanding.
+  </Step>
+</Steps>
+
+## Technical data access
+
+Development tracking utilizes:
+
+### Service methods
+
+- `somatometryService.getByPatient(patientId)`: Retrieves all records
+- `somatometryService.analyzeGrowth()`: Performs growth analysis
+- `somatometryService.getGrowthStatistics()`: Calculates summary statistics
+- `somatometryService.getWHOPercentiles()`: Fetches reference data
+
+### Database tables
+
+- `tpSomatometrias`: Patient measurements
+- `tcSomatometriasPesoEdad`: Weight-for-age WHO data
+- `tcSomatometriasAlturaEdad`: Height-for-age WHO data
+- `tcSomatometriasBmiEdad`: BMI-for-age WHO data
+- `tcSomatometriasCircuHeadAge`: Head circumference WHO data
+
+## Future enhancements
+
+Planned development tracking features:
+
+- Automated growth velocity calculations
+- Predictive growth modeling
+- Mid-parental height calculations
+- Bone age correlation
+- Catch-up growth monitoring
+- Export functionality for specialist referrals
+
+## Related features
+
+- [Somatometry measurements](/pediatrics/somatometry): Record growth data
+- [Growth charts](/pediatrics/growth-charts): Visualize growth patterns

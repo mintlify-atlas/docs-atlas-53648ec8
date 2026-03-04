@@ -1,0 +1,349 @@
+---
+title: Prescriptions
+description: Create detailed medical prescriptions with ICD-10 diagnosis codes and medication management
+---
+
+The prescriptions module enables physicians to create comprehensive medical prescriptions that include ICD-10 diagnosis codes, multiple medications with detailed dosing instructions, and general patient guidance. Each prescription is automatically numbered and timestamped for record-keeping.
+
+## Overview
+
+The prescription system provides:
+
+<CardGroup cols={2}>
+  <Card title="ICD-10 diagnosis" icon="stethoscope">
+    Search and select diagnoses from the official CIE-10 catalog
+  </Card>
+  <Card title="Medication search" icon="pills">
+    Autocomplete medication database with commercial names and concentrations
+  </Card>
+  <Card title="Detailed dosing" icon="prescription-bottle-medical">
+    Specify dose, frequency, duration, route, and special instructions
+  </Card>
+  <Card title="Prescription history" icon="clock-rotate-left">
+    View all past prescriptions in collapsible timeline format
+  </Card>
+</CardGroup>
+
+## Key features
+
+### CIE-10 diagnosis search
+
+The diagnosis search component allows you to:
+
+- Search the official CIE-10 (ICD-10) catalog by code or name
+- View catalog key and full description
+- Select primary diagnosis (required)
+- See selected diagnosis with its complete code (e.g., "A09 - Diarrea y gastroenteritis de presunto origen infeccioso")
+
+### Medication autocomplete
+
+As you type medication names, the system:
+
+- Searches the medication database for matching commercial names
+- Displays suggestions with concentration and presentation
+- Auto-fills medication details when you select a suggestion
+- Allows manual entry if medication not found in database
+
+### Prescription form fields
+
+**Prescription header:**
+- Prescription number (auto-generated, format: RX-XXXXXXXX)
+- Primary diagnosis (CIE-10, required)
+- General instructions (optional)
+
+**Each medication:**
+- Commercial name (required, with autocomplete)
+- Concentration (e.g., "500mg", "250mg/5ml")
+- Presentation (Tableta, Cápsula, Jarabe, Suspensión, Inyectable, Crema, Pomada, Gotas)
+- Dose (required, e.g., "1 tableta", "5ml")
+- Frequency (e.g., "Cada 8 horas", "Dos veces al día")
+- Duration (e.g., "7 días", "2 semanas")
+- Total quantity (e.g., "30 tabletas", "120ml")
+- Route of administration (Oral, Intravenosa, Intramuscular, Subcutánea, Tópica, Oftálmica, Ótica, Nasal)
+- Additional instructions (optional, medication-specific notes)
+
+### Prescription history
+
+Past prescriptions are displayed with:
+
+- Date and time of creation
+- Prescription number
+- Primary diagnosis
+- Complete medication list with all details
+- General instructions
+- Collapsible/expandable view for easy browsing
+
+## How to use
+
+### Creating a new prescription
+
+<Steps>
+  <Step title="Select a patient">
+    Navigate to "Pacientes" and select the patient for whom you're prescribing. You must have an active patient selected.
+  </Step>
+  
+  <Step title="Access prescriptions">
+    Click on "Recetas Médicas" in the main menu
+  </Step>
+  
+  <Step title="Enter primary diagnosis">
+    In the "Diagnóstico Principal (CIE-10)" field:
+    - Type to search the CIE-10 catalog
+    - Select the appropriate diagnosis from the dropdown
+    - The full code and description will be displayed
+  </Step>
+  
+  <Step title="Add general instructions (optional)">
+    Use the "Instrucciones Generales" text area for prescription-wide guidance, such as:
+    - "Tomar con alimentos"
+    - "Evitar alcohol durante el tratamiento"
+    - "Tomar mucha agua"
+  </Step>
+  
+  <Step title="Add medications">
+    For each medication:
+    
+    1. **Type the medication name** - The autocomplete will show matching medications
+    2. **Select from suggestions** (or continue typing to enter manually)
+    3. **Verify/edit concentration** - Auto-filled if selected from database
+    4. **Select presentation** - Choose from dropdown
+    5. **Enter dose** - Required (e.g., "1 tableta", "10ml")
+    6. **Enter frequency** - How often to take (e.g., "Cada 12 horas")
+    7. **Enter duration** - How long to take it (e.g., "10 días")
+    8. **Enter total quantity** - Total amount to dispense (e.g., "20 tabletas")
+    9. **Select route** - Choose from dropdown (defaults to Oral)
+    10. **Add special instructions** - Optional medication-specific notes
+    
+    Click "Agregar Medicamento" to add the medication to the prescription
+  </Step>
+  
+  <Step title="Review medications">
+    Review the list of added medications. You can remove any by clicking the X button next to it.
+  </Step>
+  
+  <Step title="Save prescription">
+    Click "Guardar Receta" to save. The prescription will be added to the patient's history.
+  </Step>
+</Steps>
+
+<Note>
+  Required fields are marked with an asterisk (*). You must enter at least one medication with a name and dose, plus a primary CIE-10 diagnosis.
+</Note>
+
+### Viewing prescription history
+
+<Steps>
+  <Step title="Select the patient">
+    Ensure the correct patient is selected
+  </Step>
+  
+  <Step title="Access prescriptions">
+    Navigate to "Recetas Médicas"
+  </Step>
+  
+  <Step title="Browse history">
+    Scroll to the "Historial de Recetas" section to see all past prescriptions
+  </Step>
+  
+  <Step title="Expand prescription">
+    Click on any prescription to expand and view:
+    - Full diagnosis
+    - All medications with complete details
+    - General instructions
+  </Step>
+</Steps>
+
+The prescription history shows the total number of prescriptions for the patient in a badge (e.g., "15" prescriptions).
+
+### Medication search best practices
+
+<Tip>
+  **Using the medication autocomplete:**
+  
+  1. Type at least 3 characters to trigger suggestions
+  2. Look for the medication by commercial name (e.g., "Amoxicilina", "Paracetamol")
+  3. When you see your medication in the list, click to select it
+  4. The system will auto-fill concentration and presentation
+  5. Verify the auto-filled values are correct for your intended prescription
+  
+  **If medication not found:**
+  
+  1. Continue typing the full name
+  2. Manually enter concentration and select presentation
+  3. The prescription will still be valid - you're not limited to the database
+</Tip>
+
+## Prescription presentation types
+
+DoctorSoft+ supports these medication presentations:
+
+<AccordionGroup>
+  <Accordion title="Tableta (Tablet)">
+    Solid oral dosage form. Common for antibiotics, pain relievers, and chronic medications.
+  </Accordion>
+  
+  <Accordion title="Cápsula (Capsule)">
+    Gelatin shell containing medication. Often used for powders or liquid medications.
+  </Accordion>
+  
+  <Accordion title="Jarabe (Syrup)">
+    Liquid medication with sweet taste. Common for pediatric medications and cough suppressants.
+  </Accordion>
+  
+  <Accordion title="Suspensión (Suspension)">
+    Liquid with medication particles suspended. Must be shaken before use.
+  </Accordion>
+  
+  <Accordion title="Inyectable (Injectable)">
+    Sterile solution for injection. Specify route (IV, IM, SC) in administration route.
+  </Accordion>
+  
+  <Accordion title="Crema (Cream)">
+    Topical semi-solid emulsion. Used for skin conditions.
+  </Accordion>
+  
+  <Accordion title="Pomada (Ointment)">
+    Greasy topical preparation. Provides occlusive effect for skin.
+  </Accordion>
+  
+  <Accordion title="Gotas (Drops)">
+    Liquid for drop-wise administration. Specify route (ophthalmic, otic, oral).
+  </Accordion>
+</AccordionGroup>
+
+## Routes of administration
+
+Select the appropriate route for each medication:
+
+- **Oral**: By mouth (tablets, capsules, syrups)
+- **Intravenosa**: Intravenous injection
+- **Intramuscular**: Intramuscular injection
+- **Subcutánea**: Subcutaneous injection
+- **Tópica**: Applied to skin (creams, ointments)
+- **Oftálmica**: Eye drops or ointments
+- **Ótica**: Ear drops
+- **Nasal**: Nasal spray or drops
+
+## Dosing instruction examples
+
+### Example 1: Antibiotic for infection
+
+```
+Nombre Comercial: Amoxicilina
+Concentración: 500mg
+Presentación: Cápsula
+Dosis: 1 cápsula
+Frecuencia: Cada 8 horas
+Duración: 7 días
+Cantidad Total: 21 cápsulas
+Vía: Oral
+Instrucciones: Tomar con alimentos para reducir molestias estomacales
+```
+
+### Example 2: Pain management
+
+```
+Nombre Comercial: Paracetamol
+Concentración: 500mg
+Presentación: Tableta
+Dosis: 1-2 tabletas
+Frecuencia: Cada 6 horas según necesidad
+Duración: 5 días
+Cantidad Total: 20 tabletas
+Vía: Oral
+Instrucciones: No exceder 4 gramos (8 tabletas) en 24 horas
+```
+
+### Example 3: Pediatric syrup
+
+```
+Nombre Comercial: Ambroxol
+Concentración: 15mg/5ml
+Presentación: Jarabe
+Dosis: 5ml
+Frecuencia: Cada 12 horas
+Duración: 5 días
+Cantidad Total: 120ml
+Vía: Oral
+Instrucciones: Administrar después de las comidas. Agitar antes de usar.
+```
+
+### Example 4: Topical application
+
+```
+Nombre Comercial: Betametasona
+Concentración: 0.1%
+Presentación: Crema
+Dosis: Aplicar capa fina
+Frecuencia: Dos veces al día
+Duración: 7 días
+Cantidad Total: 30g
+Vía: Tópica
+Instrucciones: Aplicar solo en áreas afectadas. No cubrir con vendaje oclusivo.
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Always include CIE-10 diagnosis">
+    The primary diagnosis is required for insurance claims and medical-legal documentation. Take time to find the most accurate ICD-10 code.
+  </Accordion>
+  
+  <Accordion title="Be specific with dosing">
+    Include exact amounts ("1 tableta", not "una") and clear frequencies ("Cada 8 horas" instead of "3 veces al día") to avoid confusion.
+  </Accordion>
+  
+  <Accordion title="Calculate total quantity">
+    Verify the total quantity matches the dose × frequency × duration. For example: 1 tablet every 8 hours for 7 days = 21 tablets.
+  </Accordion>
+  
+  <Accordion title="Use additional instructions wisely">
+    Include important information like:
+    - Timing relative to meals
+    - What to do if a dose is missed
+    - Storage requirements
+    - Warning signs to watch for
+  </Accordion>
+  
+  <Accordion title="Review allergies before prescribing">
+    Always check the patient's allergy list (in their patient record) before creating a prescription.
+  </Accordion>
+  
+  <Accordion title="Document general instructions">
+    Use the general instructions field for prescription-wide guidance that applies to all medications or the treatment plan as a whole.
+  </Accordion>
+</AccordionGroup>
+
+## Prescription numbering
+
+Each prescription receives a unique number in the format `RX-XXXXXXXX`, where:
+
+- `RX-` is the prefix indicating a prescription
+- 8 digits based on timestamp for uniqueness
+
+This number:
+- Is auto-generated when you open a new prescription form
+- Can be manually edited if needed (e.g., to match paper prescription books)
+- Appears in the prescription history for easy reference
+- Can be used to track prescriptions across the practice
+
+<Note>
+  If you navigate away from the prescription form without saving, you'll need to manually update the prescription number when you return, or let the system generate a new one.
+</Note>
+
+## Integration with patient records
+
+Prescriptions are:
+
+- **Patient-specific**: Tied to the selected patient
+- **Chronologically ordered**: Newest prescriptions appear first in history
+- **Permanently stored**: Cannot be edited or deleted after creation
+- **Fully detailed**: Every field is stored and displayed in history
+
+This creates a complete medication history for each patient, supporting:
+
+- Treatment continuity
+- Medication reconciliation
+- Insurance claims
+- Medical-legal documentation
+- Patient education ("Here's what I prescribed last time...")

@@ -1,0 +1,430 @@
+---
+title: Form components
+description: Form components for creating and editing patient data, appointments, and clinical records.
+---
+
+## Overview
+
+DoctorSoft+ provides specialized form components for managing patient information, scheduling appointments, and recording vital signs. All forms include validation, loading states, and theme integration.
+
+## PatientForm
+
+Comprehensive form for creating and editing patient records with three tabbed sections: basic info, complementary data, and personal details.
+
+### Props
+
+<ParamField path="onSuccess" type="(patient: Patient) => void" required>
+  Callback fired when patient is successfully saved, receives the created/updated patient object
+</ParamField>
+
+<ParamField path="onCancel" type="() => void" required>
+  Callback fired when user cancels the form
+</ParamField>
+
+<ParamField path="patient" type="Patient" default="undefined">
+  Existing patient data for edit mode. When provided, form switches to edit mode with confirmation dialog
+</ParamField>
+
+### Usage
+
+<CodeGroup>
+```tsx Create new patient
+import { PatientForm } from '@/components/PatientForm';
+import { useSelectedPatient } from '@/contexts/SelectedPatientContext';
+
+function NewPatientPage() {
+  const { setSelectedPatient } = useSelectedPatient();
+  const navigate = useNavigate();
+
+  const handleSuccess = (patient) => {
+    setSelectedPatient(patient);
+    navigate('/patients');
+  };
+
+  return (
+    <PatientForm
+      onSuccess={handleSuccess}
+      onCancel={() => navigate('/patients')}
+    />
+  );
+}
+```
+
+```tsx Edit existing patient
+import { PatientForm } from '@/components/PatientForm';
+
+function EditPatientPage() {
+  const { selectedPatient } = useSelectedPatient();
+
+  return (
+    <PatientForm
+      patient={selectedPatient}
+      onSuccess={handleUpdate}
+      onCancel={handleCancel}
+    />
+  );
+}
+```
+</CodeGroup>
+
+### Form structure
+
+The form is organized into three tabs:
+
+#### Básicos tab
+
+Required patient identification and contact information:
+
+- Nombre (required)
+- Apellido Paterno (required)
+- Apellido Materno
+- Fecha de Nacimiento (required)
+- Sexo (required) - "Masculino" or "Femenino"
+- Email
+- Teléfono
+- Tipo de Sangre - A+, A-, B+, B-, AB+, AB-, O+, O-
+- Refiere - referring physician name
+- Alergias - comma-separated list
+- Observaciones - notes for physicians
+
+See ~/workspace/source/src/components/PatientForm.tsx:381-580
+
+#### Complementarios tab
+
+Address and additional identification:
+
+- CURP (18 characters max)
+- RFC
+- Estado Civil - Soltero, Casado, Viudo, Divorciado, Unión Libre
+- Código Postal (with lookup integration)
+- Calle y número
+- Colonia (auto-populated from postal code)
+- Población
+- Municipio
+- Entidad Federativa
+- Contacto de Emergencia
+
+See ~/workspace/source/src/components/PatientForm.tsx:583-742
+
+#### Personales tab
+
+Demographic and insurance information:
+
+- Ocupación
+- Aseguradora (dropdown of active insurances)
+- Tipo de Paciente - Particular, Aseguradora, Empresa
+- Estado de Nacimiento (federal entities dropdown)
+- Nacionalidad (autocomplete)
+- Religión
+- Lengua Indígena
+- Grupo Étnico
+- Discapacidad
+- Responsable
+
+See ~/workspace/source/src/components/PatientForm.tsx:745-915
+
+### Features
+
+**Postal code lookup**
+
+Integrated with PostalCodeLookup component to automatically populate:
+- Asentamiento type
+- Colonia
+- Municipio
+- Entidad Federativa
+- Población
+
+See ~/workspace/source/src/components/PatientForm.tsx:147-156
+
+**Edit confirmation**
+
+When editing existing patients, shows confirmation dialog before saving changes (~/workspace/source/src/components/PatientForm.tsx:34-79).
+
+**Business unit assignment**
+
+Automatically assigns current user's business unit (idbu) to new patients using `get_idbu` RPC function.
+
+**Responsive design**
+
+Fixed bottom action buttons on mobile, relative positioning on desktop.
+
+---
+
+## AppointmentForm
+
+Visual calendar-based form for scheduling and rescheduling patient appointments.
+
+### Props
+
+<ParamField path="onSuccess" type="() => void" required>
+  Callback fired when appointment is successfully saved
+</ParamField>
+
+<ParamField path="onCancel" type="() => void" required>
+  Callback fired when user cancels the form
+</ParamField>
+
+<ParamField path="appointment" type="AppointmentWithPatient | null" default="null">
+  Existing appointment data for edit mode. Includes nested patient object
+</ParamField>
+
+### Usage
+
+<CodeGroup>
+```tsx New appointment
+import { AppointmentForm } from '@/components/AppointmentForm';
+import { useSelectedPatient } from '@/contexts/SelectedPatientContext';
+
+function NewAppointment() {
+  const { selectedPatient } = useSelectedPatient();
+  const [showForm, setShowForm] = useState(false);
+
+  if (!selectedPatient) {
+    return <div>Please select a patient first</div>;
+  }
+
+  return (
+    <AppointmentForm
+      onSuccess={() => {
+        setShowForm(false);
+        refreshAppointments();
+      }}
+      onCancel={() => setShowForm(false)}
+    />
+  );
+}
+```
+
+```tsx Reschedule appointment
+import { AppointmentForm } from '@/components/AppointmentForm';
+
+function RescheduleAppointment({ appointment }) {
+  return (
+    <AppointmentForm
+      appointment={appointment}
+      onSuccess={handleReschedule}
+      onCancel={handleCancel}
+    />
+  );
+}
+```
+</CodeGroup>
+
+### Configuration
+
+Appointment scheduling constants (~/workspace/source/src/components/AppointmentForm.tsx:32-36):
+
+```tsx
+const START_HOUR = 8;           // 8 AM
+const END_HOUR = 23;            // 11 PM
+const INTERVAL_MINUTES = 30;    // 30-minute slots
+const DAYS_TO_SHOW = 6;         // Show 6 days at a time
+const MAX_DAYS_AHEAD = 60;      // Allow scheduling up to 60 days ahead
+```
+
+### Form fields
+
+<ParamField path="fecha_cita" type="Date" required>
+  Selected appointment date from visual calendar
+</ParamField>
+
+<ParamField path="hora_cita" type="string" required>
+  Selected time slot in HH:MM format
+</ParamField>
+
+<ParamField path="id_paciente" type="string" required>
+  Patient ID from selected patient context
+</ParamField>
+
+<ParamField path="motivo" type="string" required>
+  Reason for appointment
+</ParamField>
+
+<ParamField path="estado" type="number" required>
+  Appointment status ID. Available options filtered based on current status and workflow rules
+</ParamField>
+
+<ParamField path="notas" type="string">
+  Additional notes (optional)
+</ParamField>
+
+### Features
+
+**Visual date selector**
+
+Week-based calendar grid showing 6 days at a time with navigation:
+- Previous/next week buttons
+- Past dates disabled
+- Current selection highlighted
+- Month/year display
+
+See ~/workspace/source/src/components/AppointmentForm.tsx:260-331
+
+**Time slot grid**
+
+6x6 grid of 30-minute time slots from 8 AM to 11 PM:
+- Taken slots disabled (grayed out)
+- Available slots clickable
+- Selected time highlighted
+- Shows conflict prevention
+
+See ~/workspace/source/src/components/AppointmentForm.tsx:333-369
+
+**Status workflow**
+
+Dynamic status options based on:
+- Current appointment status
+- Allowed state transitions
+- User permissions
+
+Fetched via `api.appointments.getFilteredStatusOptions()` (~/workspace/source/src/components/AppointmentForm.tsx:88-116)
+
+**Conflict detection**
+
+Prevents double-booking by checking existing appointments:
+- Fetches all appointments on mount
+- Excludes current appointment when editing
+- Disables time slots already taken
+
+See ~/workspace/source/src/components/AppointmentForm.tsx:129-136
+
+**Patient context requirement**
+
+Form automatically closes if no patient is selected (~/workspace/source/src/components/AppointmentForm.tsx:74-82)
+
+---
+
+## VitalSignRecordForm
+
+Form for recording patient vital signs with validation against normal ranges and critical values.
+
+### Props
+
+<ParamField path="catalog" type="VitalSignCatalog[]" required>
+  Array of vital sign catalog entries with normal ranges and validation rules
+</ParamField>
+
+<ParamField path="patientId" type="string" required>
+  ID of the patient being measured
+</ParamField>
+
+<ParamField path="patientAge" type="number">
+  Patient age in years, used to filter age-appropriate vital signs
+</ParamField>
+
+<ParamField path="patientSex" type="'M' | 'F'">
+  Patient biological sex for sex-specific vital signs
+</ParamField>
+
+<ParamField path="appointmentId" type="string">
+  Optional appointment ID to link vital sign to specific visit
+</ParamField>
+
+<ParamField path="onSubmit" type="(data: VitalSignFormData) => Promise<void>" required>
+  Async callback to handle form submission
+</ParamField>
+
+<ParamField path="onCancel" type="() => void" required>
+  Callback fired when user cancels the form
+</ParamField>
+
+<ParamField path="initialData" type="Partial<VitalSignFormData>">
+  Initial form values for edit mode
+</ParamField>
+
+### Usage
+
+```tsx
+import { VitalSignRecordForm } from '@/components/VitalSignRecordForm';
+import { calculateAge } from '@/utils/dateUtils';
+
+function RecordVitalSigns({ patient, catalog }) {
+  const age = patient.FechaNacimiento 
+    ? calculateAge(patient.FechaNacimiento).years 
+    : undefined;
+
+  const handleSubmit = async (data) => {
+    await api.vitalSigns.create({
+      ...data,
+      id_paciente: patient.id
+    });
+    refreshVitalSigns();
+  };
+
+  return (
+    <VitalSignRecordForm
+      catalog={catalog}
+      patientId={patient.id}
+      patientAge={age}
+      patientSex={patient.Sexo === 'Masculino' ? 'M' : 'F'}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  );
+}
+```
+
+### Form data structure
+
+```typescript
+interface VitalSignFormData {
+  id_signo_vital: string;      // Selected vital sign catalog ID
+  valor_medido: number;        // Measured value
+  fecha_hora: string;          // ISO datetime string
+  metodo_usado: string;        // Measurement method
+  notas: string;               // Additional notes
+  id_cita?: string;            // Optional appointment link
+}
+```
+
+### Catalog filtering
+
+Automatically filters vital sign options based on:
+- Patient age (in months) vs. catalog edad_minima and edad_maxima
+- Patient sex vs. catalog sexo field ("AMBOS", "M", or "F")
+
+See ~/workspace/source/src/components/VitalSignRecordForm.tsx:38-46
+
+### Validation levels
+
+Real-time validation displays color-coded status:
+
+<Tabs>
+  <Tab title="Normal">
+    ✓ Value within normal range (green)
+    
+    Condition: `valor_minimo_normal ≤ value ≤ valor_maximo_normal`
+  </Tab>
+  <Tab title="Abnormal">
+    ⚠ Value outside normal range but not critical (yellow)
+    
+    Condition: Value outside normal range but within critical bounds
+  </Tab>
+  <Tab title="Critical">
+    ⚠️ CRITICAL value (red)
+    
+    Condition: `value < valor_critico_bajo` OR `value > valor_critico_alto`
+  </Tab>
+</Tabs>
+
+See ~/workspace/source/src/components/VitalSignRecordForm.tsx:59-70
+
+### Features
+
+**Reference ranges display**
+
+When a vital sign is selected, shows info panel with:
+- Normal range (min-max with units)
+- Critical low threshold (if defined)
+- Critical high threshold (if defined)
+- Recommended measurement method
+
+See ~/workspace/source/src/components/VitalSignRecordForm.tsx:106-142
+
+**Smart placeholders**
+
+Measurement method field shows suggested method from catalog as placeholder (~/workspace/source/src/components/VitalSignRecordForm.tsx:192)
+
+**Real-time validation**
+
+Validates entered value against selected vital sign's ranges immediately on change (~/workspace/source/src/components/VitalSignRecordForm.tsx:48-56)

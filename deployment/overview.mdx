@@ -1,0 +1,204 @@
+---
+title: Deployment overview
+description: Learn how to deploy DoctorSoft+ to production environments
+---
+
+DoctorSoft+ is a Vite-based React application that can be deployed to any static hosting platform. This guide covers the general deployment process and platform-specific instructions.
+
+## Build configuration
+
+### Prerequisites
+
+<Note>
+  DoctorSoft+ requires Node.js 18 or higher for building and deployment.
+</Note>
+
+Before deploying, ensure you have:
+- Node.js 18+ installed
+- All required environment variables configured
+- A Supabase project set up with the correct URL and anon key
+
+### Build process
+
+<Steps>
+  <Step title="Install dependencies">
+    Install all project dependencies using npm:
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Set up all required environment variables for your deployment platform. See the [Environment Variables](/deployment/environment-variables) page for the complete list.
+  </Step>
+
+  <Step title="Build the application">
+    Run the build command to compile TypeScript and bundle the application:
+    ```bash
+    npm run build
+    ```
+    
+    This command:
+    - Runs TypeScript compilation (`tsc`)
+    - Bundles the application using Vite
+    - Optimizes assets and splits code into chunks
+    - Outputs the production build to the `dist` directory
+  </Step>
+
+  <Step title="Verify the build">
+    The build output will be in the `dist` directory, which contains:
+    - Optimized JavaScript bundles
+    - Minified CSS files
+    - Static assets (images, fonts, etc.)
+    - `_redirects` file for SPA routing
+  </Step>
+</Steps>
+
+### Build settings summary
+
+| Setting | Value |
+|---------|-------|
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Node version | 18+ |
+| Package manager | npm |
+
+## Code splitting strategy
+
+The Vite configuration includes intelligent code splitting to optimize load times:
+
+- **vendor-react**: Core React and ReactDOM
+- **vendor-router**: React Router
+- **vendor-supabase**: Supabase client
+- **vendor-query**: TanStack Query
+- **vendor-forms**: Form handling (react-hook-form, Zod)
+- **vendor-editor**: Rich text editor (lazy loaded)
+- **vendor-charts**: Chart.js (lazy loaded)
+- **vendor-calendar**: FullCalendar (lazy loaded)
+- **vendor-dnd**: Drag and drop utilities
+
+## Deployment platforms
+
+DoctorSoft+ can be deployed to various platforms:
+
+<CardGroup cols={2}>
+  <Card title="Netlify" icon="netlify" href="/deployment/netlify">
+    Deploy to Netlify with automatic deployments and easy configuration
+  </Card>
+  
+  <Card title="Vercel" icon="vercel" href="/deployment/vercel">
+    Deploy to Vercel with optimized edge network and instant rollbacks
+  </Card>
+  
+  <Card title="Docker" icon="docker" href="/deployment/docker">
+    Containerize your application for self-hosted deployments
+  </Card>
+</CardGroup>
+
+## Post-deployment verification
+
+After deploying to any platform, verify the following:
+
+<Steps>
+  <Step title="Application loads">
+    Navigate to your deployment URL and verify the application loads without errors.
+  </Step>
+
+  <Step title="Authentication works">
+    Test the login functionality to ensure Supabase authentication is working correctly.
+  </Step>
+
+  <Step title="Database connection">
+    Verify that the Supabase connection is active and data loads properly.
+  </Step>
+
+  <Step title="File uploads (optional)">
+    If you have storage configured, test file upload functionality to ensure the bucket is accessible.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Blank page after deployment
+
+<Warning>
+  If you see a blank page, check the browser console for errors.
+</Warning>
+
+**Common causes:**
+- Missing environment variables
+- Incorrect Supabase URL or anon key
+- SPA routing not configured (missing `_redirects` file)
+- Build failed but deployment continued
+
+**Solutions:**
+1. Check browser console for specific error messages
+2. Verify all environment variables are set correctly
+3. Ensure the `dist` folder contains the `_redirects` file
+4. Review build logs for TypeScript or bundling errors
+
+### Supabase connection error
+
+**Common causes:**
+- Environment variables not set in deployment platform
+- Supabase project is paused or deleted
+- Invalid Supabase URL or anon key
+- Network/firewall issues blocking Supabase
+
+**Solutions:**
+1. Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in your platform settings
+2. Check that your Supabase project is active at [https://supabase.com/dashboard](https://supabase.com/dashboard)
+3. Confirm the anon key matches your project's key
+4. Test the Supabase URL directly in your browser
+
+### File upload errors
+
+**Common causes:**
+- Incorrect bucket name in `VITE_BUCKET_NAME`
+- Storage bucket doesn't exist in Supabase
+- Row Level Security (RLS) policies blocking uploads
+- File size exceeds `VITE_MAX_FILE_SIZE_MB` limit
+
+**Solutions:**
+1. Verify the bucket name matches your Supabase Storage bucket
+2. Check that the bucket exists in Supabase Dashboard > Storage
+3. Review RLS policies to ensure authenticated users can upload
+4. Adjust `VITE_MAX_FILE_SIZE_MB` if needed for larger files
+
+## Local development
+
+To test the application locally before deployment:
+
+```bash
+npm install
+npm run dev
+```
+
+The development server will start at `http://localhost:5173`.
+
+To preview the production build locally:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/deployment/environment-variables">
+    Configure all required environment variables
+  </Card>
+  
+  <Card title="Deploy to Netlify" icon="netlify" href="/deployment/netlify">
+    Step-by-step Netlify deployment guide
+  </Card>
+  
+  <Card title="Deploy to Vercel" icon="vercel" href="/deployment/vercel">
+    Step-by-step Vercel deployment guide
+  </Card>
+  
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Containerize and deploy with Docker
+  </Card>
+</CardGroup>

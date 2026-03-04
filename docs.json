@@ -1,122 +1,147 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "DoctorSoft+",
+  "theme": "linden",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#0ea5e9",
+    "light": "#38bdf8",
+    "dark": "#0284c7"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/RCasillasV/sb1-16uucj1h"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/RCasillasV/sb1-16uucj1h"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "installation",
+              "configuration"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/patient-management",
+              "features/appointments",
+              "features/clinical-records",
+              "features/prescriptions",
+              "features/calendar"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Medical Records",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "medical-records/clinical-evolution",
+              "medical-records/clinical-history",
+              "medical-records/pathological-history",
+              "medical-records/non-pathological-history",
+              "medical-records/heredo-familial-history",
+              "medical-records/gyneco-obstetric-history"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Pediatrics",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "pediatrics/somatometry",
+              "pediatrics/growth-charts",
+              "pediatrics/development-tracking"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "administration/user-management",
+              "administration/business-units",
+              "administration/insurance-management",
+              "administration/schedule-configuration"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/authentication",
+              "guides/theming",
+              "guides/file-management",
+              "guides/reports"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Services",
             "pages": [
-              "api-reference/introduction"
+              "api/patient-service",
+              "api/appointment-service",
+              "api/activity-service",
+              "api/patology-service"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Components",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/components/layout",
+              "api/components/forms",
+              "api/components/modals"
+            ]
+          },
+          {
+            "group": "Contexts",
+            "pages": [
+              "api/contexts/auth-context",
+              "api/contexts/theme-context",
+              "api/contexts/patient-context"
+            ]
+          },
+          {
+            "group": "Hooks",
+            "pages": [
+              "api/hooks/use-auth",
+              "api/hooks/use-theme",
+              "api/hooks/use-activity"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/overview",
+              "deployment/environment-variables",
+              "deployment/netlify",
+              "deployment/vercel",
+              "deployment/docker"
+            ]
+          },
+          {
+            "group": "Database",
+            "pages": [
+              "deployment/supabase-setup",
+              "deployment/database-migrations",
+              "deployment/security"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

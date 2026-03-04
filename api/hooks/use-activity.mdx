@@ -1,0 +1,189 @@
+---
+title: Activity tracking patterns
+description: Learn how to track and display user activity in DoctorSoft+
+---
+
+## Overview
+
+DoctorSoft+ tracks user activity throughout the application using the `activityService`. While there isn't a dedicated `useActivity` hook, activity tracking is implemented through direct service calls and React Query patterns.
+
+## Activity service integration
+
+Activities are tracked automatically for key user actions like creating patients, scheduling appointments, and generating prescriptions. You can also create manual activities.
+
+### Tracking activity with React Query
+
+The recommended pattern is to use React Query to fetch and cache activity data:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../lib/api';
+
+function ActivityFeed() {
+  const { data: activities, isLoading, error } = useQuery({
+    queryKey: ['activities', { limit: 10 }],
+    queryFn: () => api.activityService.getRecentActivities(10, 0)
+  });
+
+  if (isLoading) return <div>Loading activities...</div>;
+  if (error) return <div>Error loading activities</div>;
+
+  return (
+    <div>
+      {activities?.map(activity => (
+        <ActivityItem key={activity.id_actividad} activity={activity} />
+      ))}
+    </div>
+  );
+}
+```
+
+### Creating manual activities
+
+When you need to track custom actions, use the `createManualActivity` method:
+
+```tsx
+import { api } from '../lib/api';
+
+async function trackCustomAction(patientId: string) {
+  try {
+    await api.activityService.createManualActivity({
+      tipo_actividad: 'custom_action',
+      descripcion: 'Performed custom medical procedure',
+      id_paciente: patientId,
+      metadata: {
+        procedureType: 'consultation',
+        duration: 30
+      }
+    });
+  } catch (error) {
+    console.error('Failed to track activity:', error);
+  }
+}
+```
+
+## Common patterns
+
+### RecentActivityList component
+
+The `RecentActivityList` component provides a ready-to-use activity feed:
+
+<ParamField path="limit" type="number" default={10}>
+  Maximum number of activities to display
+</ParamField>
+
+<ParamField path="compact" type="boolean" default={false}>
+  Whether to use compact display mode
+</ParamField>
+
+<ParamField path="onActivityClick" type="function">
+  Callback when an activity item is clicked
+</ParamField>
+
+**Usage example:**
+
+```tsx
+import { RecentActivityList } from '../components/RecentActivityList';
+import { useNavigate } from 'react-router-dom';
+
+function Dashboard() {
+  const navigate = useNavigate();
+
+  return (
+    <RecentActivityList
+      limit={5}
+      compact={true}
+      onActivityClick={(activity) => {
+        if (activity.id_paciente) {
+          navigate(`/patients`);
+        }
+      }}
+    />
+  );
+}
+```
+
+**Source:** `src/pages/Dashboard.tsx:211-222`
+
+### Activity filtering
+
+Filter activities by type, patient, or date range:
+
+```tsx
+import { api } from '../lib/api';
+
+// Filter by activity type
+const appointmentActivities = await api.activityService.getActivitiesByType(
+  'cita_nueva',
+  10,
+  0
+);
+
+// Filter by patient
+const patientActivities = await api.activityService.getActivitiesByPatient(
+  patientId,
+  10,
+  0
+);
+
+// Filter by date range
+const recentActivities = await api.activityService.getActivitiesByDateRange(
+  startDate,
+  endDate,
+  10,
+  0
+);
+```
+
+### Activity statistics
+
+Get aggregated activity statistics:
+
+```tsx
+import { api } from '../lib/api';
+
+// Get today's statistics
+const todayStats = await api.activityService.getActivityStats('today');
+
+// Get this week's statistics
+const weekStats = await api.activityService.getActivityStats('week');
+
+// Get this month's statistics
+const monthStats = await api.activityService.getActivityStats('month');
+```
+
+## Activity types
+
+The system tracks these activity types:
+
+- `paciente_nuevo` - New patient registered
+- `paciente_editado` - Patient information updated
+- `cita_nueva` - New appointment scheduled
+- `cita_editada` - Appointment modified
+- `cita_cancelada` - Appointment cancelled
+- `cita_completada` - Appointment completed
+- `receta` - Prescription created
+- `nota_clinica` - Clinical note added
+- `documento` - Document uploaded
+- `somatometria` - Somatometry measurement recorded
+- `reporte` - Report generated
+
+## Best practices
+
+<Note>
+Activities are automatically created for most user actions. Only create manual activities for custom business logic not covered by the automatic tracking.
+</Note>
+
+<Tip>
+Use React Query's `queryKey` pattern to enable automatic cache invalidation when activities are created. For example, invalidate the activities query after creating a new appointment.
+</Tip>
+
+<Warning>
+Activity records are permanent and cannot be edited or deleted by users. Ensure activity descriptions are accurate before creation.
+</Warning>
+
+## Related resources
+
+- [Activity Service API](/api/activity-service) - Complete activity service documentation
+- [Dashboard Implementation](/features/patient-management) - See activity tracking in action
+- [React Query Documentation](https://tanstack.com/query/latest) - Learn about data fetching patterns

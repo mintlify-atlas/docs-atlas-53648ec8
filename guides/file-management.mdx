@@ -1,0 +1,486 @@
+---
+title: File management
+description: Upload, store, view, and manage patient files including images, PDFs, and medical documents in DoctorSoft+
+---
+
+## Overview
+
+DoctorSoft+ provides a comprehensive file management system for handling patient documents, medical images, lab results, and other files. The system includes automatic image compression, thumbnail generation, file descriptions, and secure storage.
+
+## FileUpload component
+
+The `FileUpload` component (`src/components/FileUpload.tsx`) handles file uploads with validation, compression, and storage.
+
+### Basic usage
+
+```tsx
+import { FileUpload } from '../components/FileUpload';
+
+function PatientDocuments() {
+  const handleFilesUploaded = (files) => {
+    console.log('Uploaded files:', files);
+    // Refresh file list or update UI
+  };
+  
+  return (
+    <FileUpload
+      onFilesUploaded={handleFilesUploaded}
+      folder={`patients/${patientId}`}
+      maxFiles={10}
+      maxFileSize={5}
+    />
+  );
+}
+```
+
+### Configuration options
+
+<Accordion title="onFilesUploaded">
+  Callback function called after files are successfully uploaded. Receives an array of uploaded file objects.
+</Accordion>
+
+<Accordion title="initialFiles">
+  Array of previously uploaded files to display. Useful for editing existing records.
+</Accordion>
+
+<Accordion title="maxFiles">
+  Maximum number of files allowed. Default: 5.
+</Accordion>
+
+<Accordion title="maxFileSize">
+  Maximum file size in MB. Default: 10MB (from environment variable).
+</Accordion>
+
+<Accordion title="acceptedTypes">
+  Array of accepted MIME types. Default: images (JPEG, PNG, GIF), PDFs, Word documents, and text files.
+</Accordion>
+
+<Accordion title="bucketName">
+  Supabase storage bucket name. Default: from environment variable.
+</Accordion>
+
+<Accordion title="folder">
+  Folder path within the bucket. Format: `patients/{patientId}`.
+</Accordion>
+
+<Accordion title="enableImageCompression">
+  Enable automatic image compression. Default: true.
+</Accordion>
+
+<Accordion title="imageCompressionOptions">
+  Configuration for image compression:
+  - `maxSizeMB`: Target file size (default: 1MB)
+  - `maxWidthOrHeight`: Maximum dimension (default: 1920px)
+  - `useWebWorker`: Use web worker for compression (default: true)
+</Accordion>
+
+## File upload flow
+
+<Steps>
+  <Step title="File selection">
+    Users can select files by:
+    - Clicking the upload area to open file browser
+    - Dragging and dropping files onto the upload area
+  </Step>
+  
+  <Step title="Validation">
+    Files are validated for:
+    - File size (must be under `maxFileSize`)
+    - File type (must be in `acceptedTypes`)
+    - Total file count (must not exceed `maxFiles`)
+    - Patient selection (patient ID required)
+  </Step>
+  
+  <Step title="Description input">
+    A modal appears asking users to describe each file:
+    
+    ```tsx
+    <input
+      type="text"
+      placeholder="Ej: Rayos X de rodilla, Análisis de sangre, Tomografía..."
+      value={pendingDescriptions[file.name]}
+      onChange={(e) => setPendingDescriptions({
+        ...prev,
+        [file.name]: e.target.value
+      })}
+    />
+    ```
+  </Step>
+  
+  <Step title="Image compression">
+    If enabled, JPEG and PNG images are automatically compressed:
+    - Target size: 1MB (configurable)
+    - Max dimensions: 1920px (configurable)
+    - Compression runs in web worker to avoid blocking UI
+  </Step>
+  
+  <Step title="Upload to storage">
+    Files are uploaded to Supabase Storage:
+    - Unique filename generated: `{timestamp}-{random}.{extension}`
+    - Stored in: `{folder}/{filename}`
+    - Public URL generated for access
+  </Step>
+  
+  <Step title="Thumbnail generation">
+    Thumbnails are automatically created:
+    - **For images**: 300px thumbnail with 0.6 quality
+    - **For PDFs**: First page rendered as 300x400 JPEG
+    - Stored in: `thumbnails/{folder}/thumb_{filename}`
+  </Step>
+  
+  <Step title="Database metadata">
+    File metadata is saved to database:
+    
+    ```tsx
+    await api.files.create({
+      patient_id: patientId,
+      description: description,
+      file_path: publicUrl,
+      mime_type: file.type,
+      thumbnail_url: thumbnailUrl
+    });
+    ```
+  </Step>
+</Steps>
+
+## Supported file types
+
+Default accepted file types:
+
+| Type | MIME Types | Use Case |
+|------|-----------|----------|
+| Images | `image/jpeg`, `image/png`, `image/gif` | X-rays, scans, photos |
+| PDF | `application/pdf` | Lab results, reports |
+| Word | `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | Medical reports |
+| Text | `text/plain` | Notes, text documents |
+
+## Image compression
+
+Automatic image compression reduces storage costs and improves performance:
+
+### How it works
+
+```tsx
+const compressImageIfNeeded = async (file: File): Promise<File> => {
+  // Only compress JPEG and PNG
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    return file;
+  }
+  
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+    fileType: file.type,
+    initialQuality: 0.7,
+  };
+  
+  const compressedFile = await imageCompression(file, options);
+  return new File([compressedFile], file.name, {
+    type: file.type,
+    lastModified: Date.now(),
+  });
+};
+```
+
+<Tip>
+  Compression happens before upload, so users only upload the compressed version, saving bandwidth.
+</Tip>
+
+## File descriptions
+
+DoctorSoft+ requires descriptions for all uploaded files to improve organization:
+
+### Description modal
+
+When files are selected, a modal appears:
+
+```tsx
+<div className="space-y-4">
+  {pendingFiles.map((file) => (
+    <div key={file.name}>
+      <p>{file.name}</p>
+      <input
+        type="text"
+        placeholder="Ej: Rayos X de rodilla, Análisis de sangre..."
+        value={pendingDescriptions[file.name] || ''}
+        onChange={(e) => updateDescription(file.name, e.target.value)}
+      />
+    </div>
+  ))}
+</div>
+```
+
+<Note>
+  Descriptions are stored as the file's display name in the database, making files easier to identify.
+</Note>
+
+## Session validation
+
+File uploads validate the user's session before proceeding:
+
+```tsx
+const { data: { session }, error: sessionError } = 
+  await supabase.auth.getSession();
+
+if (sessionError || !session) {
+  setError('Tu sesión ha expirado. Por favor, recarga la página.');
+  return;
+}
+
+// Check if token is expiring soon
+const timeUntilExpiry = session.expires_at - Math.floor(Date.now() / 1000);
+
+if (timeUntilExpiry < 120) {
+  // Refresh session before upload
+  await supabase.auth.refreshSession();
+}
+```
+
+<Warning>
+  Always validate sessions before file uploads to prevent authentication errors mid-upload.
+</Warning>
+
+## Patient file gallery
+
+The `PatientFileGallery` component displays uploaded files in a visual grid.
+
+### Gallery features
+
+<Steps>
+  <Step title="Thumbnail display">
+    Files are shown with thumbnails:
+    - Images: Compressed thumbnail preview
+    - PDFs: First page thumbnail
+    - Other files: File type icon
+  </Step>
+  
+  <Step title="File information">
+    Each file card displays:
+    - Description/name
+    - File type
+    - Upload date
+    - Access statistics
+  </Step>
+  
+  <Step title="Quick actions">
+    Users can:
+    - Click to view/download file
+    - Delete file
+    - Process with AI (for medical documents)
+  </Step>
+</Steps>
+
+### Implementing the gallery
+
+```tsx
+import { PatientFileGallery } from '../components/PatientFileGallery';
+
+function FilesPage() {
+  const [files, setFiles] = useState([]);
+  
+  const handleFileRemoved = () => {
+    fetchPatientFiles(); // Refresh gallery
+  };
+  
+  const handleFileError = (error) => {
+    showError(error);
+  };
+  
+  return (
+    <PatientFileGallery
+      files={files}
+      onFileRemoved={handleFileRemoved}
+      onError={handleFileError}
+      onFileAccessed={fetchPatientFiles}
+      uploadComponent={<FileUpload {...uploadProps} />}
+    />
+  );
+}
+```
+
+## Viewing files
+
+Files can be viewed directly in the application:
+
+### Image preview
+
+```tsx
+const handleViewFile = (file) => {
+  if (isImageFile(file.type)) {
+    // Track file access
+    api.files.trackAccess(file.id);
+    
+    // Show image preview modal
+    setPreviewImageUrl(file.url);
+    setPreviewImageName(file.name);
+    setShowImagePreview(true);
+  } else {
+    // Open non-image files in new tab
+    window.open(file.url, '_blank', 'noopener,noreferrer');
+  }
+};
+```
+
+<Accordion title="Image preview modal">
+  Images open in a modal with:
+  - Full-size image display
+  - Zoom controls
+  - Download option
+  - Close button
+</Accordion>
+
+<Accordion title="PDF and document viewing">
+  PDFs and documents open in a new browser tab for viewing and download.
+</Accordion>
+
+## Deleting files
+
+Files can be deleted with logical deletion:
+
+```tsx
+const removeFile = async (fileToRemove) => {
+  try {
+    // Logical deletion through API
+    await api.files.remove(fileToRemove.id);
+    
+    // Update local state
+    const newFiles = uploadedFiles.filter(f => f.id !== fileToRemove.id);
+    setUploadedFiles(newFiles);
+    
+    if (onFilesUploaded) {
+      onFilesUploaded(newFiles);
+    }
+  } catch (err) {
+    setError('Error al eliminar archivo');
+  }
+};
+```
+
+<Note>
+  Files are marked as deleted in the database but not physically removed from storage, allowing for recovery if needed.
+</Note>
+
+## Drag and drop
+
+The upload component supports drag and drop:
+
+```tsx
+const handleDrop = (e: React.DragEvent) => {
+  e.preventDefault();
+  setDragActive(false);
+  
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    handleFiles(e.dataTransfer.files);
+  }
+};
+
+const handleDragOver = (e: React.DragEvent) => {
+  e.preventDefault();
+  setDragActive(true);
+};
+```
+
+<Tip>
+  The upload area highlights when files are dragged over it, providing visual feedback to users.
+</Tip>
+
+## Error handling
+
+Comprehensive error handling for file operations:
+
+### Validation errors
+
+```tsx
+if (file.size > maxFileSize * 1024 * 1024) {
+  return `El archivo ${file.name} excede el tamaño máximo de ${maxFileSize}MB`;
+}
+
+if (!acceptedTypes.includes(file.type)) {
+  return `Tipo de archivo no permitido: ${file.type}`;
+}
+
+if (uploadedFiles.length >= maxFiles) {
+  return `Máximo ${maxFiles} archivos permitidos`;
+}
+```
+
+### Upload errors
+
+```tsx
+try {
+  const result = await uploadFileWithTimeout(file, description, 45000);
+  uploadedFileResults.push(result);
+} catch (uploadError) {
+  const errorMessage = uploadError.message;
+  
+  if (errorMessage.includes('sesión') || errorMessage.includes('autenticado')) {
+    throw new Error('Tu sesión ha expirado. Por favor, recarga la página.');
+  }
+  
+  throw new Error(`Error al subir ${file.name}: ${errorMessage}`);
+}
+```
+
+## Best practices
+
+<Steps>
+  <Step title="Always require patient selection">
+    Validate that a patient is selected before allowing uploads:
+    
+    ```tsx
+    if (!patientId || patientId === 'new') {
+      setError('Debe seleccionar un paciente antes de subir archivos');
+      return;
+    }
+    ```
+  </Step>
+  
+  <Step title="Enable image compression">
+    Reduce storage costs and improve performance by enabling compression for medical images.
+  </Step>
+  
+  <Step title="Require meaningful descriptions">
+    Encourage users to provide clear, medical-context descriptions like "Rayos X de rodilla" instead of generic filenames.
+  </Step>
+  
+  <Step title="Set appropriate file size limits">
+    Balance between quality and storage:
+    - X-rays and scans: 5-10MB
+    - Documents: 2-5MB
+    - Photos: 2-3MB
+  </Step>
+  
+  <Step title="Generate thumbnails">
+    Always generate thumbnails for faster gallery loading and better UX.
+  </Step>
+</Steps>
+
+## File metadata API
+
+Interact with files using the API:
+
+```tsx
+import { api } from '../lib/api';
+
+// Create file record
+await api.files.create({
+  patient_id: patientId,
+  description: 'Rayos X de rodilla derecha',
+  file_path: publicUrl,
+  mime_type: 'image/jpeg',
+  thumbnail_url: thumbnailUrl
+});
+
+// Get files for patient
+const files = await api.files.getByPatientId(patientId);
+
+// Track file access
+await api.files.trackAccess(fileId);
+
+// Remove file (logical deletion)
+await api.files.remove(fileId);
+
+// Mark as AI processed
+await api.files.markAsAIProcessed(fileId);
+```

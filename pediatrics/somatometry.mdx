@@ -1,0 +1,183 @@
+---
+title: Somatometry measurements
+description: Record and track pediatric growth measurements including weight, height, BMI, head circumference, and temperature for comprehensive patient monitoring.
+---
+
+Somatometry in DoctorSoft+ enables healthcare providers to record comprehensive physical measurements for pediatric patients and track their growth over time. The system automatically calculates age-adjusted values and compares measurements against WHO growth standards.
+
+## Overview
+
+The somatometry module captures essential pediatric measurements and provides real-time analysis using World Health Organization (WHO) growth standards. All measurements are automatically plotted on growth charts with percentile calculations.
+
+### Key measurements tracked
+
+<CardGroup cols={2}>
+  <Card title="Weight" icon="scale">
+    Measured in kilograms (kg) with automatic BMI calculation
+  </Card>
+  <Card title="Height/Length" icon="ruler">
+    Measured in centimeters (cm) for children of all ages
+  </Card>
+  <Card title="Head circumference" icon="baby">
+    Critical measurement for infants and toddlers up to 36 months
+  </Card>
+  <Card title="Body temperature" icon="thermometer">
+    Optional measurement in degrees Celsius (°C)
+  </Card>
+</CardGroup>
+
+## Recording a somatometry measurement
+
+To create a new somatometry record for a patient:
+
+<Steps>
+  <Step title="Select the patient">
+    Choose the pediatric patient from the patient list. The system will display an alert if no patient is selected.
+  </Step>
+  
+  <Step title="Click 'Nueva Somatometría'">
+    Click the "Nueva" button in the tab header to open the somatometry form.
+  </Step>
+  
+  <Step title="Set measurement date">
+    Enter the date when measurements were taken. The system automatically calculates the patient's age in months based on birth date.
+    
+    <Note>
+      The measurement date cannot be earlier than the patient's birth date. The system will display a validation error if this occurs.
+    </Note>
+  </Step>
+  
+  <Step title="Enter measurements">
+    Use the interactive sliders or input fields to record:
+    
+    - **Weight (kg)**: Required field
+    - **Height (cm)**: Required field  
+    - **Head circumference (cm)**: Optional, recommended for children under 3 years
+    - **Temperature (°C)**: Optional
+    
+    The sliders automatically adjust their ranges based on the patient's age and gender using WHO percentile data.
+  </Step>
+  
+  <Step title="Review calculated values">
+    The system automatically calculates:
+    
+    - Patient's exact age in years, months, and days
+    - Body Mass Index (BMI) from weight and height
+    - Age in total months for percentile calculations
+  </Step>
+  
+  <Step title="Save the record">
+    Click "Guardar" to save the measurement. The record will appear in the somatometry list and on growth charts.
+  </Step>
+</Steps>
+
+## Age calculation
+
+DoctorSoft+ automatically calculates the patient's age based on their birth date and the measurement date:
+
+- **Total age in months**: Used for WHO percentile comparisons
+- **Detailed age**: Displayed as years, months, and days (e.g., "2a 6m")
+- **Total days**: Used for precise growth velocity calculations
+
+<Info>
+  The age calculation accounts for leap years and varying month lengths to ensure accurate percentile matching against WHO standards.
+</Info>
+
+## BMI calculation and classification
+
+Body Mass Index is automatically calculated using the formula:
+
+```
+BMI = weight (kg) / [height (m)]²
+```
+
+The system classifies BMI based on age-appropriate percentiles:
+
+| Classification | Percentile Range | Color Code |
+|----------------|------------------|------------|
+| Bajo peso (Underweight) | Below P15 | Red |
+| Peso saludable (Healthy weight) | P15 - P85 | Green |
+| Sobrepeso (Overweight) | P85 - P97 | Orange |
+| Obesidad (Obesity) | Above P97 | Dark red |
+
+<Note>
+  BMI classifications are only displayed for children 2 months and older, as BMI-for-age charts begin at this age according to WHO standards.
+</Note>
+
+## Temperature monitoring
+
+Temperature readings are color-coded for quick assessment:
+
+- **Blue** (&lt;36°C): Below normal range
+- **Green** (36.0-37.9°C): Normal range
+- **Yellow** (38.0-39.0°C): Mild fever
+- **Red** (&gt;39°C): High fever
+
+Temperature is measured in degrees Celsius and displayed with one decimal place.
+
+## Viewing somatometry records
+
+The somatometry table displays all historical measurements with:
+
+- Measurement date
+- Age at measurement (years and months)
+- Weight, height, BMI, and head circumference values
+- Temperature with visual indicator
+- BMI classification badge
+- Edit action button
+
+Records are sorted by date in descending order (most recent first).
+
+## Editing existing records
+
+To modify a somatometry record:
+
+1. Click the edit icon (pencil) in the Actions column
+2. Update the desired measurements in the form
+3. Click "Guardar" to save changes
+
+<Warning>
+  Editing historical measurements will recalculate BMI and may affect growth chart visualizations. Ensure accuracy when making changes.
+</Warning>
+
+## Data storage
+
+All somatometry records are stored in the `tpSomatometrias` table with:
+
+- Patient reference (patient_id)
+- Measurement date and calculated age
+- All physical measurements
+- Calculated BMI value
+- Business unit association (idbu)
+- Measuring provider information (measured_by)
+
+Records maintain full audit trail for medical documentation purposes.
+
+## Best practices
+
+<Steps>
+  <Step title="Measure consistently">
+    Take measurements at similar times of day and under similar conditions for accurate growth tracking.
+  </Step>
+  
+  <Step title="Use standardized equipment">
+    Ensure scales and stadiometers are calibrated according to facility protocols.
+  </Step>
+  
+  <Step title="Record immediately">
+    Enter measurements into the system during or immediately after the patient visit to prevent errors.
+  </Step>
+  
+  <Step title="Review growth charts">
+    Check the growth charts after entering new measurements to identify any concerning trends.
+  </Step>
+  
+  <Step title="Note unusual findings">
+    Use the notes field to document any circumstances affecting measurements (e.g., patient refused, measurement estimate).
+  </Step>
+</Steps>
+
+## Related features
+
+- [Growth charts](/pediatrics/growth-charts): View WHO-standardized growth curves
+- [Development tracking](/pediatrics/development-tracking): Monitor developmental milestones

@@ -1,0 +1,504 @@
+---
+title: Deploy with Docker
+description: Containerize and deploy DoctorSoft+ using Docker for self-hosted environments
+---
+
+Docker provides a containerized deployment solution for DoctorSoft+, making it easy to deploy to self-hosted environments, cloud providers, or orchestration platforms like Kubernetes.
+
+## Prerequisites
+
+Before deploying with Docker, ensure you have:
+
+- Docker installed ([Download Docker](https://docs.docker.com/get-docker/))
+- Docker Compose (optional, for easier configuration)
+- Supabase project URL and anon key
+- All required environment variables
+
+## Dockerfile overview
+
+DoctorSoft+ includes a Dockerfile in the repository root:
+
+<CodeGroup>
+```dockerfile Dockerfile
+FROM node:lts-alpine
+ENV NODE_ENV=testing
+WORKDIR /usr/src/app
+COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+RUN npm install --production --silent && mv node_modules ../
+COPY . .
+EXPOSE 3000
+RUN chown -R node /usr/src/app
+USER node
+CMD ["npm", "start"]
+```
+</CodeGroup>
+
+<Note>
+  This Dockerfile uses the lightweight Alpine Linux base image and runs the container as a non-root user for security.
+</Note>
+
+## Building the Docker image
+
+<Steps>
+  <Step title="Clone the repository">
+    If you haven't already, clone the DoctorSoft+ repository:
+    ```bash
+    git clone https://github.com/your-org/doctorsoft-plus.git
+    cd doctorsoft-plus
+    ```
+  </Step>
+
+  <Step title="Build the image">
+    Build the Docker image using the provided Dockerfile:
+    ```bash
+    docker build -t doctorsoft-plus:latest .
+    ```
+
+    This command:
+    - Uses the Dockerfile in the current directory
+    - Tags the image as `doctorsoft-plus:latest`
+    - Installs dependencies and copies application files
+  </Step>
+
+  <Step title="Verify the build">
+    List your Docker images to verify the build:
+    ```bash
+    docker images | grep doctorsoft-plus
+    ```
+
+    You should see:
+    ```
+    doctorsoft-plus  latest  abc123def456  2 minutes ago  250MB
+    ```
+  </Step>
+</Steps>
+
+## Running the container
+
+### Basic usage
+
+Run the container with environment variables:
+
+```bash
+docker run -d \
+  --name doctorsoft-plus \
+  -p 3000:3000 \
+  -e VITE_SUPABASE_URL=https://your-project.supabase.co \
+  -e VITE_SUPABASE_ANON_KEY=your-anon-key \
+  -e VITE_MAX_FILE_SIZE_MB=10 \
+  -e VITE_BUCKET_NAME=your-bucket-name \
+  doctorsoft-plus:latest
+```
+
+**Parameters:**
+- `-d`: Run in detached mode (background)
+- `--name`: Container name for easy reference
+- `-p 3000:3000`: Map port 3000 on host to port 3000 in container
+- `-e`: Set environment variables
+
+### Using environment file
+
+For easier management, use an environment file:
+
+<Steps>
+  <Step title="Create environment file">
+    Create a `.env.docker` file:
+    ```bash
+    # .env.docker
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-anon-key-here
+    VITE_MAX_FILE_SIZE_MB=10
+    VITE_BUCKET_NAME=your-bucket-name
+    VITE_APP_VERSION=25.40
+    ```
+
+    <Warning>
+      Never commit this file to version control. Add `.env.docker` to your `.gitignore`.
+    </Warning>
+  </Step>
+
+  <Step title="Run with environment file">
+    ```bash
+    docker run -d \
+      --name doctorsoft-plus \
+      -p 3000:3000 \
+      --env-file .env.docker \
+      doctorsoft-plus:latest
+    ```
+  </Step>
+</Steps>
+
+### Access the application
+
+Once running, access the application at:
+
+```
+http://localhost:3000
+```
+
+Or on your server's IP address:
+
+```
+http://your-server-ip:3000
+```
+
+## Docker Compose
+
+For a more maintainable setup, use Docker Compose:
+
+<Steps>
+  <Step title="Create docker-compose.yml">
+    Create a `docker-compose.yml` file in your project root:
+
+    <CodeGroup>
+    ```yaml docker-compose.yml
+    version: '3.8'
+
+    services:
+      app:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        image: doctorsoft-plus:latest
+        container_name: doctorsoft-plus
+        restart: unless-stopped
+        ports:
+          - "3000:3000"
+        environment:
+          - NODE_ENV=production
+          - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+          - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+          - VITE_MAX_FILE_SIZE_MB=${VITE_MAX_FILE_SIZE_MB:-10}
+          - VITE_BUCKET_NAME=${VITE_BUCKET_NAME:-00000000-default-bucket}
+          - VITE_APP_VERSION=${VITE_APP_VERSION:-25.40}
+        env_file:
+          - .env.docker
+        healthcheck:
+          test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+          interval: 30s
+          timeout: 10s
+          retries: 3
+          start_period: 40s
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start with Docker Compose">
+    Start the application:
+    ```bash
+    docker-compose up -d
+    ```
+
+    **Useful commands:**
+    - View logs: `docker-compose logs -f`
+    - Stop: `docker-compose down`
+    - Restart: `docker-compose restart`
+    - Rebuild: `docker-compose up -d --build`
+  </Step>
+</Steps>
+
+## Production Dockerfile
+
+For production deployments, consider this optimized multi-stage Dockerfile:
+
+<CodeGroup>
+```dockerfile Dockerfile.production
+# Build stage
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build application
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine AS production
+
+# Copy built assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration for SPA routing
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+</CodeGroup>
+
+### Nginx configuration
+
+Create an `nginx.conf` file for SPA routing:
+
+<CodeGroup>
+```nginx nginx.conf
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json application/javascript;
+
+    # Security headers
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Cache static assets
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # SPA routing - serve index.html for all routes
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+```
+</CodeGroup>
+
+### Build production image
+
+```bash
+docker build -f Dockerfile.production -t doctorsoft-plus:production .
+```
+
+Run the production container:
+
+```bash
+docker run -d \
+  --name doctorsoft-plus-prod \
+  -p 80:80 \
+  doctorsoft-plus:production
+```
+
+<Note>
+  The production Dockerfile uses Nginx to serve static files, resulting in a much smaller image (~50MB vs ~250MB) and better performance.
+</Note>
+
+## Container management
+
+### View logs
+
+```bash
+# Follow logs in real-time
+docker logs -f doctorsoft-plus
+
+# View last 100 lines
+docker logs --tail 100 doctorsoft-plus
+
+# View logs with timestamps
+docker logs -t doctorsoft-plus
+```
+
+### Stop and start
+
+```bash
+# Stop container
+docker stop doctorsoft-plus
+
+# Start container
+docker start doctorsoft-plus
+
+# Restart container
+docker restart doctorsoft-plus
+```
+
+### Update application
+
+```bash
+# Pull latest code
+git pull
+
+# Rebuild image
+docker build -t doctorsoft-plus:latest .
+
+# Stop old container
+docker stop doctorsoft-plus
+docker rm doctorsoft-plus
+
+# Run new container
+docker run -d \
+  --name doctorsoft-plus \
+  -p 3000:3000 \
+  --env-file .env.docker \
+  doctorsoft-plus:latest
+```
+
+### Remove container and image
+
+```bash
+# Stop and remove container
+docker stop doctorsoft-plus
+docker rm doctorsoft-plus
+
+# Remove image
+docker rmi doctorsoft-plus:latest
+```
+
+## Troubleshooting
+
+### Container won't start
+
+**Check logs:**
+```bash
+docker logs doctorsoft-plus
+```
+
+**Common causes:**
+- Missing required environment variables
+- Port 3000 already in use
+- Invalid Supabase credentials
+
+**Solutions:**
+1. Verify all environment variables are set
+2. Use a different port: `-p 8080:3000`
+3. Check Supabase URL and anon key
+
+### Application not accessible
+
+**Verify container is running:**
+```bash
+docker ps | grep doctorsoft-plus
+```
+
+**Check port mapping:**
+```bash
+docker port doctorsoft-plus
+```
+
+**Solutions:**
+1. Ensure port is not blocked by firewall
+2. Verify correct port mapping in `docker run` command
+3. Check if container is healthy: `docker inspect doctorsoft-plus`
+
+### Build fails
+
+**Common causes:**
+- Missing files in build context
+- Network issues during `npm install`
+- Insufficient disk space
+
+**Solutions:**
+1. Ensure all files are committed to git
+2. Check internet connection
+3. Free up disk space: `docker system prune`
+4. Build with verbose output: `docker build --progress=plain -t doctorsoft-plus:latest .`
+
+## Deployment to cloud providers
+
+### AWS ECS
+
+1. Push image to Amazon ECR
+2. Create ECS task definition
+3. Configure environment variables
+4. Deploy to ECS cluster
+
+### Google Cloud Run
+
+```bash
+# Build and push to Google Container Registry
+gcloud builds submit --tag gcr.io/PROJECT_ID/doctorsoft-plus
+
+# Deploy to Cloud Run
+gcloud run deploy doctorsoft-plus \
+  --image gcr.io/PROJECT_ID/doctorsoft-plus \
+  --platform managed \
+  --set-env-vars VITE_SUPABASE_URL=https://your-project.supabase.co,VITE_SUPABASE_ANON_KEY=your-key
+```
+
+### Digital Ocean App Platform
+
+1. Push code to GitHub
+2. Create new app from GitHub repo
+3. Configure environment variables in dashboard
+4. Deploy automatically
+
+### Kubernetes
+
+Create Kubernetes deployment and service manifests:
+
+<CodeGroup>
+```yaml k8s-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doctorsoft-plus
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: doctorsoft-plus
+  template:
+    metadata:
+      labels:
+        app: doctorsoft-plus
+    spec:
+      containers:
+      - name: doctorsoft-plus
+        image: doctorsoft-plus:production
+        ports:
+        - containerPort: 80
+        env:
+        - name: VITE_SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: doctorsoft-secrets
+              key: supabase-url
+        - name: VITE_SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: doctorsoft-secrets
+              key: supabase-anon-key
+```
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Variables" icon="key" href="/deployment/environment-variables">
+    Configure environment variables for Docker
+  </Card>
+  
+  <Card title="Deployment Overview" icon="rocket" href="/deployment/overview">
+    Back to deployment overview
+  </Card>
+  
+  <Card title="Docker Documentation" icon="book" href="https://docs.docker.com/">
+    Official Docker documentation
+  </Card>
+  
+  <Card title="Docker Compose" icon="layer-group" href="https://docs.docker.com/compose/">
+    Learn more about Docker Compose
+  </Card>
+</CardGroup>
