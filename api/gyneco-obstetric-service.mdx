@@ -1,0 +1,240 @@
+---
+title: Gyneco-obstetric service
+description: API for managing female patient gynecological and obstetric history
+---
+
+## Overview
+
+The `gynecoObstetricHistory` service provides methods for managing gynecological and obstetric history records for female patients. Each patient can have one comprehensive gyneco-obstetric record.
+
+**Source:** `src/services/gynecoObstetricService.ts`
+
+<Note>
+This service is specifically for female patients and stores reproductive health information including menstrual history, pregnancies, births, and preventive screenings.
+</Note>
+
+## Methods
+
+### getByPatientId()
+
+Retrieves the gyneco-obstetric history for a specific patient.
+
+<ParamField path="patientId" type="string" required>
+  Patient ID to fetch history for
+</ParamField>
+
+**Returns:** `Promise<GynecoObstetricHistory | null>` - Returns null if no record exists
+
+**Example:**
+
+```tsx
+import { gynecoObstetricHistory } from '../services/gynecoObstetricService';
+
+const history = await gynecoObstetricHistory.getByPatientId(patientId);
+
+if (history) {
+  console.log(`GPAC: ${history.gestas}-${history.partos}-${history.abortos}-${history.cesareas}`);
+  console.log(`Menarca: ${history.menarca_edad} years`);
+}
+```
+
+**Source:** `src/pages/GynecoObstetricHistory.tsx:45`
+
+**Caching:** Results are cached for 5 minutes per patient
+
+### create()
+
+Creates a new gyneco-obstetric history record for a patient.
+
+<ParamField path="payload" type="Partial<GynecoObstetricHistory>" required>
+  Gyneco-obstetric history data including:
+  - `patient_id` - Patient ID (required)
+  - `menarca_edad` - Age at menarche
+  - `ritmo_menstrual` - Menstrual rhythm (e.g., "28/4")
+  - `fecha_ultima_menstruacion` - Last menstrual period date
+  - `gestas` - Total pregnancies
+  - `partos` - Vaginal births
+  - `abortos` - Miscarriages/abortions
+  - `cesareas` - Cesarean sections
+  - `metodo_anticonceptivo` - Contraceptive method
+  - `papanicolaou_fecha` - Last Pap smear date
+  - `papanicolaou_resultado` - Pap smear result
+  - `mastografia_fecha` - Last mammography date
+  - `mastografia_resultado` - Mammography result (BIRADS classification)
+</ParamField>
+
+**Returns:** `Promise<GynecoObstetricHistory>`
+
+**Example:**
+
+```tsx
+const newRecord = await gynecoObstetricHistory.create({
+  patient_id: selectedPatient.id,
+  menarca_edad: 13,
+  ritmo_menstrual: '28/4',
+  fecha_ultima_menstruacion: '2024-02-15',
+  gestas: 2,
+  partos: 1,
+  abortos: 0,
+  cesareas: 1,
+  metodo_anticonceptivo: 'DIU',
+  idbu: currentIdbu,
+  user_id: currentUserId
+});
+```
+
+**Automatic calculations:**
+- `gpac` field is automatically calculated as `G-P-A-C` (Gestas-Partos-Abortos-Cesareas)
+- Validates that `gestas = partos + abortos + cesareas`
+
+**Source:** `src/pages/GynecoObstetricHistory.tsx:167`
+
+### update()
+
+Updates an existing gyneco-obstetric history record.
+
+<ParamField path="id" type="string" required>
+  Record ID to update
+</ParamField>
+
+<ParamField path="payload" type="Partial<GynecoObstetricHistory>" required>
+  Fields to update
+</ParamField>
+
+**Returns:** `Promise<GynecoObstetricHistory>`
+
+**Example:**
+
+```tsx
+const updated = await gynecoObstetricHistory.update(recordId, {
+  papanicolaou_fecha: '2024-03-01',
+  papanicolaou_resultado: 'Normal',
+  fecha_ultima_menstruacion: '2024-03-15'
+});
+```
+
+**Cache invalidation:** Automatically clears patient cache after update
+
+**Source:** `src/services/gynecoObstetricService.ts:103`
+
+### delete()
+
+Deletes a gyneco-obstetric history record (hard delete).
+
+<ParamField path="id" type="string" required>
+  Record ID to delete
+</ParamField>
+
+**Returns:** `Promise<void>`
+
+<Warning>
+This performs a hard delete and cannot be undone. Consider if soft delete or archiving would be more appropriate for medical records.
+</Warning>
+
+## Data structure
+
+### GynecoObstetricHistory
+
+```typescript
+{
+  id: string;
+  patient_id: string;
+  
+  // Menstrual history
+  menarca_edad: number | null;          // Age at first period
+  ritmo_menstrual: string | null;       // e.g., "28/4" (cycle/duration)
+  fecha_ultima_menstruacion: string | null; // Last menstrual period (YYYY-MM-DD)
+  ivsa: number | null;                  // Age at first sexual intercourse
+  
+  // Obstetric history (GPAC)
+  gestas: number | null;                // Total pregnancies
+  partos: number | null;                // Vaginal births
+  abortos: number | null;               // Miscarriages/abortions
+  cesareas: number | null;              // Cesarean sections
+  gpac: string | null;                  // Auto-calculated "G-P-A-C"
+  
+  // Pregnancy details
+  fecha_probable_parto: string | null;  // Estimated due date (calculated by Naegele's Rule)
+  semanas_gestacion: number | null;     // Weeks of current pregnancy
+  
+  // Contraception
+  metodo_anticonceptivo: string | null;
+  
+  // Preventive screenings
+  papanicolaou_fecha: string | null;
+  papanicolaou_resultado: string | null;
+  mastografia_fecha: string | null;
+  mastografia_resultado: string | null; // BIRADS 0-6
+  
+  // Additional fields
+  notas: string | null;
+  idbu: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+## GPAC calculation
+
+The **GPAC** (or **GTPAL**) system documents pregnancy history:
+
+- **G** (Gestas): Total number of pregnancies
+- **P** (Partos): Number of term births
+- **A** (Abortos): Number of miscarriages/abortions before 20 weeks
+- **C** (Cesareas): Number of cesarean deliveries
+
+**Validation rule:** `G = P + A + C`
+
+**Example:** A patient with GPAC "4-2-1-1" has had:
+- 4 total pregnancies
+- 2 vaginal births
+- 1 miscarriage
+- 1 cesarean section
+
+**Source:** `src/pages/GynecoObstetricHistory.tsx:97-111` (auto-calculation logic)
+
+## Naegele's Rule (FPP calculation)
+
+The service can calculate **Fecha Probable de Parto (FPP)** / Expected Delivery Date using Naegele's Rule:
+
+**Formula:** Last menstrual period date + 280 days (40 weeks)
+
+**Implementation:**
+
+```typescript
+const fum = new Date(fecha_ultima_menstruacion);
+const fpp = new Date(fum.getTime() + (280 * 24 * 60 * 60 * 1000));
+```
+
+**Source:** `src/pages/GynecoObstetricHistory.tsx:100-107`
+
+## BIRADS classification
+
+For mammography results, the service supports **BIRADS** (Breast Imaging Reporting and Data System) classification:
+
+| BIRADS | Meaning |
+|--------|---------|
+| 0 | Incomplete - Need additional imaging |
+| 1 | Negative - No abnormality |
+| 2 | Benign finding |
+| 3 | Probably benign - Follow-up recommended |
+| 4 | Suspicious abnormality - Biopsy recommended |
+| 5 | Highly suggestive of malignancy |
+| 6 | Known biopsy-proven malignancy |
+
+**Source:** `src/pages/GynecoObstetricHistory.tsx:237-243`
+
+## Integration
+
+This service is used by:
+
+- **GynecoObstetricHistory page** (`src/pages/GynecoObstetricHistory.tsx`) - Full form interface
+- **Patient reports** - Included in comprehensive patient reports
+- **Clinical history** - Part of complete medical history
+
+## Related
+
+- [Gyneco-Obstetric History Feature](/medical-records/gyneco-obstetric-history) - User guide
+- [Patient Service](/api/patient-service) - Link to patient records
+- [Clinical History](/medical-records/clinical-history) - Complete medical history

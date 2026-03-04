@@ -39,7 +39,8 @@
               "features/appointments",
               "features/clinical-records",
               "features/prescriptions",
-              "features/calendar"
+              "features/calendar",
+              "features/vital-signs"
             ]
           },
           {
@@ -90,7 +91,9 @@
               "api/patient-service",
               "api/appointment-service",
               "api/activity-service",
-              "api/patology-service"
+              "api/patology-service",
+              "api/vital-signs-service",
+              "api/gyneco-obstetric-service"
             ]
           },
           {

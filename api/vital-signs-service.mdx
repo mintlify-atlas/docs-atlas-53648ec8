@@ -1,0 +1,230 @@
+---
+title: Vital signs service
+description: API for managing vital signs catalog and patient vital sign records
+---
+
+## Overview
+
+The `vitalSignsService` provides methods for managing the vital signs catalog (definitions of vital signs like blood pressure, heart rate, etc.) and recording patient vital sign measurements.
+
+**Source:** `src/services/vitalSignsService.ts`
+
+## Catalog management
+
+### getCatalog()
+
+Retrieves all active vital signs from the catalog for a business unit.
+
+<ParamField path="idbu" type="string" required>
+  Business unit identifier
+</ParamField>
+
+**Returns:** `Promise<VitalSignCatalog[]>`
+
+**Example:**
+
+```tsx
+import { vitalSignsService } from '../services/vitalSignsService';
+
+const catalog = await vitalSignsService.getCatalog(idbu);
+// Returns: Array of vital sign definitions with normal/critical ranges
+```
+
+### getCatalogById()
+
+Retrieves a single vital sign definition by ID.
+
+<ParamField path="id" type="string" required>
+  Vital sign catalog ID
+</ParamField>
+
+**Returns:** `Promise<VitalSignCatalog | null>`
+
+### createCatalogItem()
+
+Creates a new vital sign definition in the catalog.
+
+<ParamField path="item" type="Omit<VitalSignCatalog, 'id' | 'created_at' | 'updated_at'>" required>
+  Vital sign definition including:
+  - `Descripcion` - Name of the vital sign
+  - `Unidad` - Unit of measurement (e.g., "mmHg", "bpm")
+  - `valor_minimo_normal` - Minimum normal value
+  - `valor_maximo_normal` - Maximum normal value
+  - `valor_critico_bajo` - Critical low threshold
+  - `valor_critico_alto` - Critical high threshold
+  - `idbu` - Business unit ID
+</ParamField>
+
+**Returns:** `Promise<VitalSignCatalog>`
+
+### updateCatalogItem()
+
+Updates an existing vital sign definition.
+
+<ParamField path="id" type="string" required>
+  Vital sign catalog ID
+</ParamField>
+
+<ParamField path="updates" type="Partial<VitalSignCatalog>" required>
+  Fields to update
+</ParamField>
+
+**Returns:** `Promise<VitalSignCatalog>`
+
+### deactivateCatalogItem()
+
+Soft deletes a vital sign from the catalog by setting `activo` to false.
+
+<ParamField path="id" type="string" required>
+  Vital sign catalog ID to deactivate
+</ParamField>
+
+**Returns:** `Promise<void>`
+
+## Patient records
+
+### getPatientRecords()
+
+Retrieves all vital sign records for a specific patient with catalog information joined.
+
+<ParamField path="pacienteId" type="string" required>
+  Patient ID
+</ParamField>
+
+<ParamField path="limit" type="number">
+  Optional limit on number of records returned
+</ParamField>
+
+**Returns:** `Promise<VitalSignRecord[]>` - Records include:
+- `valor` - Measured value
+- `fecha_hora` - Measurement timestamp
+- `notas` - Optional notes
+- `tcSignosVitales` - Joined catalog information with normal/critical ranges
+
+**Example:**
+
+```tsx
+const records = await vitalSignsService.getPatientRecords(patientId, 10);
+// Returns last 10 vital sign measurements for patient
+```
+
+**Source:** `src/pages/VitalSigns.tsx:32`
+
+### getRecordById()
+
+Retrieves a single vital sign record by ID.
+
+<ParamField path="id" type="string" required>
+  Record ID
+</ParamField>
+
+**Returns:** `Promise<VitalSignRecord | null>`
+
+### createRecord()
+
+Creates a new vital sign measurement for a patient.
+
+<ParamField path="record" type="VitalSignFormData" required>
+  Vital sign measurement including:
+  - `paciente_id` - Patient ID
+  - `id_signo_vital` - Vital sign type from catalog
+  - `valor` - Measured value
+  - `fecha_hora` - Measurement timestamp
+  - `notas` - Optional notes
+  - `idbu` - Business unit ID
+  - `user_id` - User who recorded the measurement
+</ParamField>
+
+**Returns:** `Promise<VitalSignRecord>`
+
+**Example:**
+
+```tsx
+const record = await vitalSignsService.createRecord({
+  paciente_id: selectedPatient.id,
+  id_signo_vital: 'blood-pressure-id',
+  valor: 120.0,
+  fecha_hora: new Date().toISOString(),
+  notas: 'Patient resting, seated',
+  idbu: currentIdbu,
+  user_id: currentUserId
+});
+```
+
+### updateRecord()
+
+Updates an existing vital sign record.
+
+<ParamField path="id" type="string" required>
+  Record ID
+</ParamField>
+
+<ParamField path="updates" type="Partial<VitalSignRecord>" required>
+  Fields to update
+</ParamField>
+
+**Returns:** `Promise<VitalSignRecord>`
+
+### deleteRecord()
+
+Soft deletes a vital sign record.
+
+<ParamField path="id" type="string" required>
+  Record ID to delete
+</ParamField>
+
+**Returns:** `Promise<void>`
+
+## Validation levels
+
+The service supports automatic validation of vital sign values against catalog ranges:
+
+- **Normal**: Value within `valor_minimo_normal` to `valor_maximo_normal`
+- **Warning**: Value outside normal range but not critical
+- **Critical**: Value below `valor_critico_bajo` or above `valor_critico_alto`
+
+**Source:** `src/components/VitalSignRecordForm.tsx` - Validation logic implemented in form
+
+## Data structure
+
+### VitalSignCatalog
+
+```typescript
+{
+  id: string;
+  Descripcion: string;        // e.g., "Blood Pressure Systolic"
+  Unidad: string;             // e.g., "mmHg", "bpm", "°C"
+  valor_minimo_normal: number;
+  valor_maximo_normal: number;
+  valor_critico_bajo: number;
+  valor_critico_alto: number;
+  aplica_sexo: string | null; // Filter by patient sex
+  edad_minima: number | null; // Minimum age for this vital sign
+  edad_maxima: number | null; // Maximum age for this vital sign
+  activo: boolean;
+  idbu: string;
+}
+```
+
+### VitalSignRecord
+
+```typescript
+{
+  id: string;
+  paciente_id: string;
+  id_signo_vital: string;
+  valor: number;
+  fecha_hora: string;         // ISO timestamp
+  notas: string | null;
+  deleted_at: string | null;
+  idbu: string;
+  user_id: string;
+  tcSignosVitales: VitalSignCatalog; // Joined catalog data
+}
+```
+
+## Related
+
+- [Vital Signs Feature](/features/vital-signs) - User guide for recording vital signs
+- [Patient Service](/api/patient-service) - Link vital signs to patients
+- [Somatometry](/pediatrics/somatometry) - Related to pediatric vital measurements

@@ -1,0 +1,263 @@
+---
+title: Vital signs monitoring
+description: Track and monitor patient vital signs with automatic validation and trend analysis
+---
+
+## Overview
+
+The Vital Signs feature allows healthcare providers to record, track, and analyze patient vital signs such as blood pressure, heart rate, temperature, respiratory rate, and oxygen saturation. The system provides automatic validation against normal ranges and critical thresholds.
+
+**Access:** Navigate to **Vital Signs** from the main menu after selecting a patient.
+
+## Recording vital signs
+
+<Steps>
+  <Step title="Select a patient">
+    Choose a patient from the patient list. The vital signs module requires an active patient selection.
+  </Step>
+
+  <Step title="Click 'New Record'">
+    Click the **+ New Record** button to open the vital signs recording form.
+  </Step>
+
+  <Step title="Select vital sign type">
+    Choose the type of vital sign to record from the catalog dropdown. Available options include:
+    - Blood Pressure (Systolic/Diastolic)
+    - Heart Rate
+    - Respiratory Rate
+    - Temperature
+    - Oxygen Saturation (SpO2)
+    - Blood Glucose
+    - Pain Scale
+  </Step>
+
+  <Step title="Enter measurement value">
+    Enter the measured value. The system will automatically:
+    - Validate against normal ranges for the patient's age and sex
+    - Flag values outside normal range with warning indicators
+    - Alert for critical values requiring immediate attention
+  </Step>
+
+  <Step title="Add notes (optional)">
+    Document any relevant context such as:
+    - Patient position (seated, standing, supine)
+    - Activity level (resting, post-exercise)
+    - Time of day
+    - Any factors affecting the measurement
+  </Step>
+
+  <Step title="Save record">
+    Click **Save** to record the vital sign. The measurement is immediately added to the patient's history.
+  </Step>
+</Steps>
+
+## Validation levels
+
+The system automatically validates measurements against configured ranges:
+
+### Normal range
+
+Values within the normal range are displayed with a **green** indicator.
+
+**Example:** Blood pressure 120/80 mmHg for an adult
+
+### Warning range
+
+Values outside normal but not critical are displayed with a **yellow** indicator.
+
+**Example:** Blood pressure 140/90 mmHg (elevated but not emergency)
+
+### Critical range
+
+Values requiring immediate attention are displayed with a **red** indicator and may trigger alerts.
+
+**Examples:**
+- Blood pressure &gt;180/120 mmHg (hypertensive crisis)
+- Temperature &gt;40°C (high fever)
+- Oxygen saturation &lt;90% (hypoxemia)
+
+<Warning>
+Critical values should be immediately reviewed by a healthcare provider and may require emergency intervention.
+</Warning>
+
+## Age and sex-specific ranges
+
+The vital signs catalog supports age and sex-specific normal ranges:
+
+**Pediatric considerations:**
+- Heart rate: Higher normal ranges for infants and children
+- Respiratory rate: Faster for younger children
+- Blood pressure: Lower for children, increases with age
+
+**Sex-specific:**
+- Some vital signs may have different normal ranges for males and females
+- The system automatically filters and applies appropriate ranges based on patient demographics
+
+## Viewing vital signs history
+
+The vital signs history displays all recorded measurements in reverse chronological order:
+
+**List view features:**
+- **Date/Time**: When the measurement was taken
+- **Vital Sign Type**: Which vital sign was measured
+- **Value**: Measured value with unit (e.g., "120 mmHg")
+- **Status Indicator**: Color-coded normal/warning/critical status
+- **Notes**: Any recorded notes about the measurement
+- **Recorded By**: User who recorded the measurement
+
+### Filter by type
+
+Use the dropdown filter to view only specific vital sign types:
+
+```
+Filter: [All Vital Signs ▼]
+      Blood Pressure
+      Heart Rate
+      Temperature
+      ...
+```
+
+This helps focus on trends for a specific vital sign.
+
+## Trend analysis
+
+<Note>
+The Vital Signs module includes graphical trend analysis to visualize changes over time.
+</Note>
+
+### View trends
+
+1. Click the **📈 View Trends** button for a specific vital sign type
+2. A chart displays all measurements of that type over time
+3. Reference lines show normal range boundaries
+4. Hover over data points to see exact values and dates
+
+**Chart features:**
+- **X-axis**: Time (dates)
+- **Y-axis**: Measurement values
+- **Green zone**: Normal range
+- **Yellow zones**: Warning ranges
+- **Red zones**: Critical ranges
+- **Data points**: Individual measurements (color-coded by status)
+
+### Identify patterns
+
+Trend charts help identify:
+- Improving or worsening conditions
+- Response to treatment
+- Need for medication adjustments
+- Seasonal or cyclical patterns
+
+**Example:** A blood pressure trend chart showing gradual decrease after starting antihypertensive medication indicates positive treatment response.
+
+## Managing the vital signs catalog
+
+Administrators can manage the vital signs catalog to customize vital signs for their practice.
+
+**Access:** Navigate to **Settings** → **Vital Signs Catalog**
+
+### Add new vital sign
+
+1. Click **+ Add Vital Sign**
+2. Enter:
+   - **Description**: Name of the vital sign
+   - **Unit**: Unit of measurement (mmHg, bpm, °C, etc.)
+   - **Normal Range**: Min and max normal values
+   - **Critical Thresholds**: Dangerously low/high values
+   - **Age Range** (optional): Applicable age range
+   - **Sex** (optional): Male, Female, or All
+3. Click **Save**
+
+### Edit vital sign definition
+
+1. Find the vital sign in the catalog
+2. Click **✏️ Edit**
+3. Update ranges or parameters
+4. Click **Save**
+
+<Tip>
+When updating normal ranges, ensure they reflect current clinical guidelines and are appropriate for your patient population.
+</Tip>
+
+### Deactivate vital sign
+
+Instead of deleting, vital signs can be deactivated:
+
+1. Click **⋮ Actions** on the vital sign
+2. Select **Deactivate**
+3. Confirm the action
+
+Deactivated vital signs:
+- No longer appear in the recording form
+- Historical records remain intact
+- Can be reactivated if needed
+
+## Best practices
+
+### Accurate measurements
+
+- Use calibrated equipment
+- Follow proper measurement techniques
+- Record patient position and activity level
+- Take multiple readings if first reading is abnormal
+- Wait appropriate time between repeated measurements
+
+### Complete documentation
+
+- Always document date and time of measurement
+- Add notes for any unusual circumstances
+- Record both systolic and diastolic for blood pressure
+- Note any patient symptoms at time of measurement
+
+### Regular monitoring
+
+For patients with chronic conditions:
+- Establish monitoring schedule (daily, weekly, etc.)
+- Track trends over time
+- Review trends during appointments
+- Adjust treatment based on patterns
+
+### Critical value protocol
+
+When critical values are recorded:
+1. Immediately notify attending physician
+2. Recheck measurement to confirm accuracy
+3. Document actions taken in response
+4. Follow facility protocol for critical values
+
+## Data structure
+
+Each vital sign record contains:
+
+| Field | Description |
+|-------|-------------|
+| Patient | Linked to patient record |
+| Vital Sign Type | From catalog (e.g., Blood Pressure) |
+| Value | Numeric measurement |
+| Unit | mmHg, bpm, °C, %, etc. |
+| Date/Time | ISO timestamp of measurement |
+| Status | Normal/Warning/Critical (auto-calculated) |
+| Notes | Optional contextual information |
+| Recorded By | User who entered the measurement |
+| Business Unit | Location where measured |
+
+**Database tables:**
+- `tcSignosVitales` - Catalog of vital sign types
+- `tpSignosVitales` - Patient vital sign records
+
+## Related features
+
+<CardGroup cols={2}>
+  <Card title="Somatometry" icon="ruler-vertical" href="/pediatrics/somatometry">
+    Track pediatric growth measurements alongside vital signs
+  </Card>
+  <Card title="Clinical Records" icon="file-medical" href="/features/clinical-records">
+    Document clinical findings with vital sign context
+  </Card>
+  <Card title="Patient Reports" icon="file-pdf" href="/guides/reports">
+    Include vital signs in patient reports
+  </Card>
+  <Card title="Vital Signs Service" icon="code" href="/api/vital-signs-service">
+    API documentation for vital signs service
+  </Card>
+</CardGroup>
