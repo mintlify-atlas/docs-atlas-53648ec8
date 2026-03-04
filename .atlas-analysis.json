@@ -1,0 +1,165 @@
+{
+  "projectType": "saas",
+  "projectName": "DoctorSoft+",
+  "projectDescription": "A comprehensive medical practice management system for healthcare professionals.",
+  "theme": "linden",
+  "primaryColor": "#0ea5e9",
+  "lightColor": "#38bdf8",
+  "darkColor": "#0284c7",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation",
+              "configuration"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/patient-management",
+              "features/appointments",
+              "features/clinical-records",
+              "features/prescriptions",
+              "features/calendar"
+            ]
+          },
+          {
+            "group": "Medical Records",
+            "pages": [
+              "medical-records/clinical-evolution",
+              "medical-records/clinical-history",
+              "medical-records/pathological-history",
+              "medical-records/non-pathological-history",
+              "medical-records/heredo-familial-history",
+              "medical-records/gyneco-obstetric-history"
+            ]
+          },
+          {
+            "group": "Pediatrics",
+            "pages": [
+              "pediatrics/somatometry",
+              "pediatrics/growth-charts",
+              "pediatrics/development-tracking"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "administration/user-management",
+              "administration/business-units",
+              "administration/insurance-management",
+              "administration/schedule-configuration"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/authentication",
+              "guides/theming",
+              "guides/file-management",
+              "guides/reports"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Services",
+            "pages": [
+              "api/patient-service",
+              "api/appointment-service",
+              "api/activity-service",
+              "api/patology-service"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "api/components/layout",
+              "api/components/forms",
+              "api/components/modals"
+            ]
+          },
+          {
+            "group": "Contexts",
+            "pages": [
+              "api/contexts/auth-context",
+              "api/contexts/theme-context",
+              "api/contexts/patient-context"
+            ]
+          },
+          {
+            "group": "Hooks",
+            "pages": [
+              "api/hooks/use-auth",
+              "api/hooks/use-theme",
+              "api/hooks/use-activity"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/overview",
+              "deployment/environment-variables",
+              "deployment/netlify",
+              "deployment/vercel",
+              "deployment/docker"
+            ]
+          },
+          {
+            "group": "Database",
+            "pages": [
+              "deployment/supabase-setup",
+              "deployment/database-migrations",
+              "deployment/security"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Patient Management",
+    "Appointment Scheduling",
+    "Clinical Records & History",
+    "Prescription Management",
+    "Growth Charts & Pediatrics",
+    "Insurance Management",
+    "Multi-user & Multi-tenant Support",
+    "Activity Tracking & Reporting",
+    "File Management & Gallery",
+    "Customizable Theming"
+  ],
+  "publicApiSurface": [
+    "api.patients.getAll()",
+    "api.patients.getById(id)",
+    "api.patients.create(payload)",
+    "api.patients.update(id, payload)",
+    "api.appointments.getAll()",
+    "api.appointments.create(payload)",
+    "api.appointments.update(id, payload)",
+    "api.activityService.getActivities()",
+    "api.gynecoObstetricHistory.getByPatientId(id)",
+    "api.patologies.search(query)",
+    "useAuth()",
+    "useTheme()",
+    "useSelectedPatient()",
+    "AuthContext",
+    "ThemeContext",
+    "SelectedPatientContext"
+  ]
+}
